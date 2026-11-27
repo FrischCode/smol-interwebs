@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIW — Smol InterWebs</title>
+<link rel="icon" href="data:,">
+<style>
+/* ── tokens ───────────────────────────────────────────────────────────── */
+:root{
+  --bg:#0f1317; --panel:#151a20; --raise:#1b2128; --sunk:#12171c;
+  --border:#272f39; --border-soft:#212831; --hair:#1e242c;
+  --text:#e2e6ea; --muted:#98a3b0; --dim:#6b7684;
+  --accent:#58a6ff; --ok:#4ac08a; --warn:#d9a441; --bad:#e56c6c;
+  --mono:ui-monospace,"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --hh:150px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:13px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{text-align:right}
+.dim{color:var(--dim)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;color:inherit}
+::placeholder{color:#5c6673}
+.wrap{max-width:1440px;margin:0 auto;padding:0 20px 90px}
+
+/* ── header ───────────────────────────────────────────────────────────── */
+header.top{position:sticky;top:0;z-index:40;background:rgba(15,19,23,.95);
+  backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+header.top .inner{max-width:1440px;margin:0 auto;padding:11px 20px 10px}
+.brandrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.brand{font-size:14.5px;font-weight:650;letter-spacing:.01em}
+.brand b{color:var(--accent);font-weight:600}
+.sub{color:var(--dim);font-size:11px}
+.brandrow .spacer{flex:1}
+[hidden]{display:none!important}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border:1px solid var(--border);
+  border-radius:3px;color:var(--muted);background:var(--sunk)}
+.chip.mock{border-color:#5e4a1d;color:var(--warn);background:#221b0f}
+.chip.ok{border-color:#22543f;color:var(--ok);background:#111f19}
+.chip.bad{border-color:#5f2929;color:var(--bad);background:#231313}
+.chip.warn{border-color:#5e4a1d;color:var(--warn);background:#221b0f}
+button.chip:hover{border-color:#3b4653;color:var(--text)}
+.lines{margin-top:10px;display:grid;grid-template-columns:max-content minmax(0,1fr) auto;
+  gap:3px 14px;align-items:baseline}
+.lines .lbl{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.lines .val{font-family:var(--mono);font-size:12px;min-width:0;overflow-wrap:anywhere}
+.lines .val .k{color:var(--dim)}
+.lines .val .g{color:var(--ok)}.lines .val .a{color:var(--warn)}.lines .val .r{color:var(--bad)}
+.lines .acts{display:flex;gap:6px;align-items:center;white-space:nowrap}
+.lines .under{grid-column:2;color:var(--dim);font-size:11px;font-family:var(--mono);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--dim)}
+.dot.ok{background:var(--ok);box-shadow:0 0 0 3px #111f19}
+.dot.bad{background:var(--bad);box-shadow:0 0 0 3px #231313}
+.dot.warn{background:var(--warn);box-shadow:0 0 0 3px #221b0f}
+.pending{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#1d1a11;border:1px solid #463914;border-left:3px solid var(--warn);border-radius:4px;
+  padding:7px 10px;font-size:12px}
+.pending .t{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.pending .f{font-family:var(--mono);font-size:11.5px}
+.banner{margin-top:10px;border:1px solid #5f2929;border-left:3px solid var(--bad);background:#221314;
+  border-radius:4px;padding:8px 11px;font-size:12.5px}
+.banner b{color:var(--bad)}
+.banner .why{color:var(--muted);display:block;margin-top:2px;font-size:11.5px}
+
+/* ── notices ──────────────────────────────────────────────────────────── */
+#notices:empty{display:none}
+#notices{margin-top:14px;display:grid;gap:6px}
+.note{display:flex;align-items:baseline;gap:9px;border:1px solid var(--border);border-left:3px solid var(--dim);
+  background:var(--panel);border-radius:4px;padding:7px 10px;font-size:12px}
+.note.warn{border-left-color:var(--warn);border-color:#3d3319}
+.note.bad{border-left-color:var(--bad);border-color:#3d2222}
+.note.ok{border-left-color:var(--ok);border-color:#1f3b30}
+.note .txt{flex:1;min-width:0}
+.note .x{color:var(--dim);font-size:14px;line-height:1;padding:0 2px}
+.note .x:hover{color:var(--text)}
+
+/* ── panels ───────────────────────────────────────────────────────────── */
+section{margin-top:20px}
+.pane{background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:clip}
+.pane>h2{margin:0;padding:10px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);background:var(--sunk);
+  display:flex;align-items:center;gap:10px}
+.pane>h2 .hint{margin-left:auto;font:11px/1.4 var(--sans);letter-spacing:0;text-transform:none;color:var(--dim);font-weight:400}
+
+/* ── the list ─────────────────────────────────────────────────────────── */
+#tablewrap{overflow:visible}
+table.grid{width:100%;border-collapse:collapse;table-layout:auto}
+table.grid thead th{position:sticky;top:var(--hh);z-index:10;background:#12171c;
+  font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);font-weight:600;
+  text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+table.grid thead th.num{text-align:right}
+/* each content column sizes to its content; the download column takes the remaining width */
+col.w-book{width:1%}col.w-build{width:1%}
+col.w-size{width:1%}col.w-media{width:1%}col.w-state{width:1%}col.w-dl{width:100%}col.w-act{width:1%}
+tr.row{border-bottom:1px solid var(--hair)}
+tr.row:hover{background:#171d24}
+tr.row td{padding:5px 10px;vertical-align:top;font-size:12px}
+tr.row.st-downloading{background:#141a1e}
+tr.row.st-failed{background:#171417}
+.c-book{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-book .bk{font-family:var(--mono);font-size:11.5px}
+.c-book.fam{padding-left:26px}
+.c-book .tick{position:absolute;margin-left:-16px;color:#39434f}
+.bklnk{color:var(--accent);text-decoration:none}.bklnk:hover{text-decoration:underline}
+.c-build{font-size:11px;color:var(--muted);white-space:nowrap}
+.c-size{font-size:11.5px;color:var(--text);white-space:nowrap}
+.c-media{font-size:11px;white-space:nowrap}
+.md-t{color:var(--dim)}.md-i{color:var(--muted)}.md-u{color:#5c6673}
+.c-state{line-height:1.45}
+.badge{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;white-space:nowrap;
+  text-transform:uppercase;padding:1.5px 5px;border-radius:2px;border:1px solid;vertical-align:1px}
+.b-n{color:var(--dim);border-color:#2e3841;background:#141a20}
+.b-g{color:var(--ok);border-color:#1f4a38;background:#111f19}
+.b-g2{color:#79b39a;border-color:#243b33;background:#111a18}
+.b-i{color:#6cb2e8;border-color:#1d3a52;background:#0f1a26}
+.b-w{color:var(--warn);border-color:#4d3d18;background:#1e1810}
+.b-r{color:var(--bad);border-color:#4d2626;background:#1e1315}
+.det .badge{margin-right:7px}
+.det{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono);
+  overflow-wrap:anywhere}
+.det .r{color:var(--bad)}.det .a{color:var(--warn)}.det .g{color:var(--ok)}
+.lk{font-size:11px;font-family:var(--mono)}
+.bar{height:3px;background:#232c35;border-radius:2px;overflow:hidden;margin:5px 0 3px}
+.bar i{display:block;height:100%;background:var(--warn);transition:width .4s linear}
+.bar.ok i{background:var(--ok)}
+.bar.bad i{background:var(--bad)}
+.c-act{white-space:nowrap;text-align:right}
+.ib{display:inline-flex;align-items:center;justify-content:center;min-width:0;height:24px;
+  padding:0 9px;border:1px solid var(--border);border-radius:3px;background:var(--sunk);
+  font-family:var(--mono);font-size:11px;line-height:1;color:var(--muted);white-space:nowrap}
+.ib:hover{border-color:#3b4653;color:var(--text)}
+.ib.pri{border-color:#1f4a38;background:#111f19;color:var(--ok)}
+.ib.pri:hover{border-color:#2f6a4d}
+.ib.gh{border-color:var(--border-soft);color:var(--dim)}
+.ib.gh:hover{color:var(--text);border-color:#3b4653}
+.ib.danger{color:var(--dim)}
+.ib.danger:hover{border-color:#5f2929;color:var(--bad)}
+.ib.danger.arm{border-color:#6a2c2c;background:#231313;color:var(--bad)}
+.ib+.ib{margin-left:5px}
+</style>
+</head>
+<body>
+<style>
+/* ── controls ─────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 10px;
+  border:1px solid var(--border);border-radius:3px;background:var(--raise);color:var(--text);
+  white-space:nowrap;line-height:1.3}
+.btn:hover{border-color:#3d4956;background:#222a33}
+.btn.pri{border-color:#2b5b8c;background:#16324b;color:#cfe6ff}
+.btn.pri:hover{background:#1b3d5b;border-color:#3a78b3}
+.btn.gh{background:transparent;color:var(--muted);border-color:#2b333d}
+.btn.gh:hover{color:var(--text)}
+.btn.sm{padding:2.5px 8px;font-size:11px}
+.btn.danger:hover{border-color:#5f2929;color:var(--bad);background:#1d1416}
+.btn[disabled],.btn[disabled]:hover{opacity:.38;cursor:not-allowed;background:var(--raise);
+  border-color:#252d36;color:var(--dim)}
+.btn.arm{border-color:#5f2929;color:var(--bad);background:#231518}
+input.txt{width:100%;background:var(--sunk);border:1px solid var(--border);border-radius:3px;
+  padding:5px 8px;font-size:12px;font-family:var(--mono)}
+input.txt:focus{outline:none;border-color:#33506e;box-shadow:0 0 0 2px #16324b55}
+input.ck{width:13px;height:13px;accent-color:#3f81c4;margin:0;cursor:pointer}
+.lbl-s{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 3px}
+.row2{display:flex;gap:8px}.row2>*{min-width:0}
+.hint-s{font-size:11px;color:var(--dim);margin-top:4px}
+.hint-s.r{color:var(--bad)}.hint-s.a{color:var(--warn)}.hint-s.g{color:var(--ok)}
+/* ── list footer ──────────────────────────────────────────────────────── */
+.listbar{position:sticky;bottom:0;z-index:12;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:9px 14px;border-top:1px solid var(--border);background:#101519}
+.listbar .tot{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600}
+.listbar .tot.zero{color:var(--dim)}
+.listbar .cnt{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.listbar .spacer{flex:1}
+.listbar .cap{width:100%;font-size:11.5px;color:var(--bad);font-family:var(--mono);margin-top:-4px}
+/* ── add more books: row one — the kiwix link, the paste field, the button; row two — the output ── */
+.tier{display:grid;grid-template-columns:1fr;gap:12px;padding:12px 14px}
+.tier-top{display:flex;align-items:center;gap:14px}
+.tier-top .browse{flex:0 0 auto}
+.tier-paste{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.tier-paste .txt{flex:1;min-width:0}
+#prevcard{display:flex;min-width:0}
+#prevcard .prevcard{flex:1;align-self:stretch}
+#prevcard .prevcard.empty{display:flex;align-items:center;color:var(--muted);font-size:12px}
+.prevcard{border:1px solid var(--border);border-radius:4px;background:var(--sunk);padding:9px 11px}
+.prevcard .pt{font-size:12.5px;font-weight:600;margin-bottom:5px}
+.prevcard .pk{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:2px 10px;
+  font-family:var(--mono);font-size:11px;color:var(--muted)}
+.prevcard .pk b{color:var(--text);font-weight:400;overflow-wrap:anywhere}
+.prevcard .acts{display:flex;gap:8px;margin-top:9px;align-items:center}
+/* ── settings ─────────────────────────────────────────────────────────── */
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}
+.setgrid .pane{display:flex;flex-direction:column}
+.card{padding:12px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;font-size:11.5px;align-items:baseline}
+.kv .k{color:var(--dim);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.kv .v{font-family:var(--mono);overflow-wrap:anywhere}
+.kv .v.g{color:var(--ok)}.kv .v.a{color:var(--warn)}.kv .v.r{color:var(--bad)}
+.freewrap{display:flex;flex-direction:column;gap:5px}
+.rulebox{border:1px solid var(--border);border-left:3px solid var(--dim);border-radius:4px;
+  padding:7px 10px;font-size:11.5px;background:var(--sunk)}
+.rulebox.bad{border-color:#5f2929;border-left-color:var(--bad);background:#221314;color:var(--text)}
+.rulebox.ok{border-left-color:var(--ok)}
+.movebox{border:1px solid #463914;border-left:3px solid var(--warn);border-radius:4px;
+  padding:10px;background:#1a1710;display:flex;flex-direction:column;gap:8px}
+.cardfoot{margin-top:auto;padding-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* ── toasts / foot ────────────────────────────────────────────────────── */
+#toasts{position:fixed;right:16px;bottom:16px;z-index:90;display:flex;flex-direction:column;gap:7px;
+  align-items:flex-end;pointer-events:none}
+.toast{pointer-events:auto;max-width:420px;background:#1b2128;border:1px solid var(--border);
+  border-left:3px solid var(--accent);border-radius:4px;padding:8px 12px;font-size:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tin .18s ease-out}
+.toast.bad{border-left-color:var(--bad)}.toast.ok{border-left-color:var(--ok)}
+.toast.warn{border-left-color:var(--warn)}
+.toast .m{font-family:var(--mono);font-size:11.5px;word-break:break-word}
+.toast .d{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+@keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.foot{margin-top:26px;color:var(--dim);font-size:11px;font-family:var(--mono);
+  display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid var(--border-soft);padding-top:10px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}.toast{animation:none}}
+@media (max-width:1080px){
+  .tier-top{flex-wrap:wrap}
+  col.w-media{width:46px}
+  .md-t::after{content:''}
+}
+@media (max-width:980px){
+  .wrap{padding:0 12px 90px}
+  table.grid{min-width:860px}
+  tr.row td{padding:5px 7px}
+}
+</style>
+
+<header class="top"><div class="inner">
+  <div class="brandrow">
+    <span class="brand">SIW <b>·</b> Smol InterWebs</span>
+    <span class="sub mono" id="brandver">v—</span>
+    <span class="spacer"></span>
+    <span class="chip mock" id="mockchip" hidden>mock data</span>
+    <span class="chip" id="errchip" hidden>state unavailable</span>
+    <span class="chip" id="pollchip">/state —</span>
+    <button class="chip" id="refreshbtn" title="Re-read /state now">⟳ <span id="age">0s</span></button>
+  </div>
+  <div class="lines" id="lines"></div>
+  <div id="pendingbox"></div>
+</div></header>
+
+<div class="wrap">
+  <div id="notices"></div>
+
+  <section>
+    <h2>Corpus</h2>
+    <div class="pane">
+      <h2>Books <span class="hint" id="listhint"></span></h2>
+      <div id="tablewrap"></div>
+      <div class="listbar" id="listbar"></div>
+    </div>
+    <div class="pane" style="margin-top:14px">
+      <h2>Add more books</h2>
+      <div class="tier">
+        <div class="tier-top">
+        <a class="btn browse" href="https://browse.library.kiwix.org" target="_blank" rel="noreferrer">Browse the kiwix library</a>
+        <div class="tier-paste">
+          <input class="txt" id="pasteurl" spellcheck="false" data-fk="pasteurl" title="On the catalog page, open the book's Download dialog and copy the &quot;Direct&quot; link - not the magnet or the torrent. Already have the file? Put the .zim in the folder — the next scan surfaces it as a row." placeholder="paste the book's &quot;Direct&quot; download link here">
+          <button class="btn pri sm" id="previewbtn">Preview</button>
+          <span class="dim" id="prevestate" style="font-size:11px">no URL previewed</span>
+        </div>
+        </div>
+        <div id="prevcard"></div>
+</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Settings</h2>
+    <div class="setgrid">
+      <div class="pane"><h2>ZIM location</h2>
+        <div class="card">
+          <div class="kv">
+            <span class="k">directory</span><span class="v" id="cdir">—</span>
+            <span class="k">on disk</span><span class="v" id="cused">—</span>
+            <span class="k">free</span><span class="v" id="cfree">—</span>
+            <span class="k">scan</span><span class="v" id="cscan">—</span>
+          </div>
+          <div class="freewrap"><div class="bar ok" id="freebar"><i style="width:0%"></i></div>
+            <span class="hint-s" id="freetxt"></span></div>
+          <div id="movewrap"></div>
+          <div class="cardfoot">
+            <button class="btn sm" id="openfolder">Open ZIM folder</button>
+            <button class="btn sm gh" id="chgdir">Change location…</button>
+            <button class="btn sm gh" id="rescan" title="Re-read the directory now">Rescan</button>
+          </div>
+        </div>
+      </div>
+      <div class="pane"><h2>Server</h2>
+        <div class="card">
+          <div><span class="lbl-s">bind address</span>
+            <input class="txt" id="sbin" list="binds" spellcheck="false" data-fk="sbin">
+            <datalist id="binds"><option value="127.0.0.1"><option value="::1"><option value="0.0.0.0"></datalist>
+          </div>
+          <div class="row2">
+            <div style="width:96px"><span class="lbl-s">port</span>
+              <input class="txt" id="sport" inputmode="numeric" data-fk="sport"></div>
+            <div style="flex:1"><span class="lbl-s">username</span>
+              <input class="txt" id="suser" spellcheck="false" autocomplete="off" data-fk="suser"></div>
+          </div>
+          <div><span class="lbl-s">password <span class="dim" id="pwstate"></span></span>
+            <input class="txt" id="spass" type="password" autocomplete="new-password" data-fk="spass"
+                   placeholder="unchanged">
+          </div>
+          <div class="rulebox" id="srule"></div>
+          <div class="cardfoot">
+            <button class="btn pri sm" id="ssave">Save</button>
+            <span class="hint-s" id="ssavehint"></span>
+          </div>
+        </div>
+      </div>
+      <div class="pane"><h2>Runtime</h2>
+        <div class="card">
+          <div class="kv">
+            <span class="k">siw</span><span class="v" id="rver">—</span>
+            <span class="k">config</span><span class="v" id="rcfg">—</span>
+            <span class="k">platform</span><span class="v" id="rplat">—</span>
+            <span class="k">kiwix-serve</span><span class="v" id="rbin" title="the engine binary this config launches — configured by you, or the pinned build SIW fetched and verified">—</span>
+            <span class="k">engine log</span><span class="v" id="rlog">—</span>
+            <span class="k">state</span><span class="v" id="rstate">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+<div id="toasts"></div>
+
+<script>
+'use strict';
+/* ══ helpers ══ */
+var $=function(s,r){return (r||document).querySelector(s);};
+var ESCM={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return ESCM[c];});}
+function deepCopy(o){return JSON.parse(JSON.stringify(o));}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function isoNow(){return new Date().toISOString().replace(/\.\d+Z$/,'Z');}
+function fmtBytes(n){
+  if(n==null||isNaN(n))return '—';
+  var u=['B','KB','MB','GB','TB','PB'],i=0,v=Math.abs(Number(n));
+  while(v>=1024&&i<u.length-1){v/=1024;i++;}
+  return (i===0?String(Math.round(v)):v.toFixed(1))+' '+u[i];
+}
+function fmtDur(s){
+  if(s==null||!isFinite(s))return '—';
+  s=Math.max(0,Math.round(s));
+  if(s<60)return s+'s';
+  var m=Math.floor(s/60),ss=s%60;
+  if(m<60)return m+'m '+String(ss).padStart(2,'0')+'s';
+  return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m';
+}
+function ago(iso){
+  if(!iso)return '—';
+  var t=Date.parse(iso); if(isNaN(t))return esc(iso);
+  var s=(Date.now()-t)/1000;
+  if(s<0)s=0;
+  if(s<60)return Math.round(s)+'s ago';
+  if(s<3600)return Math.round(s/60)+'m ago';
+  if(s<86400)return Math.round(s/3600)+'h ago';
+  return Math.round(s/86400)+'d ago';
+}
+function mediaLabel(m){return m==='text'?'text':(m==='text+images'?'text + images':'—');}
+function isLoopback(a){a=String(a||'').trim().replace(/^\[|\]$/g,'');
+  if(a==='')return true; return a==='::1'||a==='localhost'||a.indexOf('127.')===0;}
+function pct(r){var p=r.progress||{};if(!p.total_bytes)return 0;return clamp(Math.round(p.bytes/p.total_bytes*100),0,100);}
+/* ══ MOCK PAYLOAD — the body of GET /state (CONTRACT.md §1).
+   R()/F()/ID()/SVC() are builders: each expands to exactly the documented field set,
+   so this constant is byte-for-byte equivalent to state.mock.json after construction. ══ */
+var GBU=1073741824, KU='https://lb.download.kiwix.org/zim/';
+function G(x){return Math.round(x*GBU);}
+function F(name,bytes,mtime,sha,ver){return{name:name,path:'C:\\kiwix\\zims\\'+name,bytes:bytes,
+  mtime:mtime,sha256:sha||null,verified:(ver===undefined?null:ver)};}
+function ID(rung,name,ttl,date){return{rung:rung,name:name,title:ttl,date:date||null,confidence:'high'};}
+function SVC(seen,url,page,conf){return{configured:true,confirmed:!!conf,seen_at:seen,url:url,page_url:page};}
+function IDF(){return{configured:true,confirmed:false,seen_at:null,url:null,page_url:null};}
+function DEFAULT_ACTIONS(r){switch(r.state){
+  case 'absent':return['download'];
+  case 'queued':case 'downloading':return['cancel'];
+  case 'failed':return['retry','remove'];
+  case 'downloaded':return['remove','scan'];
+  case 'served':return['remove','scan'];}
+  return['scan'];}
+function R(o){var r={id:o.i,book:o.b,title:o.t||o.b,build:o.d||null,
+  builds:o.B||null,media:o.m||'text',size_bytes:o.s,
+  state:o.st,note:o.n||null,defaulted:(o.df===undefined?true:o.df),ident:o.ident||null,file:o.f||null,served:o.sv||null,
+  progress:o.p||null,error:o.e||null,source_url:(o.u===undefined?null:o.u),actions:o.a||null};
+  if(!r.actions)r.actions=DEFAULT_ACTIONS(r);
+  return r;}
+
+var MOCK_STATE={
+ ok:true,product:'siw',name:'Smol InterWebs',version:'0.2.0',
+ generated_at:'2026-11-24T19:41:07Z',poll_after_ms:2000,
+ server:{bind:'127.0.0.1',port:7662,url:'http://127.0.0.1:7662',loopback:true,bound_on:['127.0.0.1'],
+   credentials:{mode:'none',configured:false,username:null},warning:null,uptime_seconds:252.4,
+   config_path:'C:\\Users\\example\\AppData\\Local\\siw\\config.json',platform:'win32 (Windows)'},
+ engine:{state:'down',up:false,host:'127.0.0.1',port:8080,url:'http://localhost:8080',
+   exe:'C:\\Users\\example\\AppData\\Local\\siw\\tools\\kiwix-tools\\kiwix-serve.exe',version:'kiwix-serve 3.7.0-1',form:'paths',
+   bound_on:[],pid:null,started:'2026-11-24T19:30:12Z',started_by_siw:true,served_books:null,configured_books:3,drift:null,
+   problem:'nothing listening on 127.0.0.1:8080 (last SIW pid 18204 is gone)',
+   bin:{state:'configured',version:'kiwix-serve 3.7.0-1',path:'C:\\Users\\example\\AppData\\Local\\siw\\tools\\kiwix-tools\\kiwix-serve.exe',
+     exists:true,progress:null,error:null},
+   log_path:'C:\\Users\\example\\AppData\\Local\\siw\\engine-8080.log',uptime_seconds:null,
+   last_checked:'2026-11-24T19:41:07Z'},
+ pending_apply:[{field:'launch',label:'Engine launch form',from:'paths',to:'library',
+   requires:'engine_restart'}],
+ corpus:{directory:'C:\\kiwix\\zims',exists:true,bytes_free:G(96),bytes_total:G(512),books:3,
+   bytes:4514958541,parts:[{name:'superuser.com_en_all_2026-07.zim.part',bytes:1708323242}],
+   scanned_at:'2026-11-24T19:41:02Z',scan_errors:[]},
+ catalog_link:'https://browse.library.kiwix.org',
+ rows:[
+  R({i:'wikipedia/mini',b:'wikipedia',t:'Wikipedia',d:'mini',m:'text',s:G(13.4),st:'absent',n:'light text build — the wiki default',u:KU+'wikipedia/wikipedia_en_mini_2026-08.zim'}),
+
+  R({i:'devdocs c',b:'devdocs c',t:'devdocs — C',s:M(1),st:'absent',u:KU+'devdocs/devdocs_en_c_2026-04.zim'}),
+  R({i:'devdocs cpp',b:'devdocs cpp',t:'devdocs — C++',s:M(8),st:'absent',u:KU+'devdocs/devdocs_en_cpp_2026-04.zim'}),
+  R({i:'devdocs javascript',b:'devdocs javascript',t:'devdocs — JavaScript',s:M(3),st:'absent',u:KU+'devdocs/devdocs_en_javascript_2026-04.zim'}),
+  R({i:'devdocs python',b:'devdocs python',t:'devdocs — Python',s:M(5),st:'served',
+     ident:ID('filename','devdocs_en_python_2026-04','devdocs Python','2026-04'),
+     f:F('devdocs_en_python_2026-04.zim',M(5),'2026-05-02T11:07:33Z','2e9c73b50a4d8f16c5b27e908d3f6a411f0c5e78a96d2b347c8e40f50b1a9d62',true),
+     sv:SVC('2026-11-24T19:31:05Z','http://localhost:8080/content/devdocs_en_python_2026-04/','http://localhost:8080/content/devdocs_en_python_2026-04/python/3.12/',false)}),
+  R({i:'devdocs rust',b:'devdocs rust',t:'devdocs — Rust',s:M(6),st:'queued',
+     n:'one transfer at a time — waiting for superuser',
+     p:{bytes:0,total_bytes:M(6),percent:0,rate_bytes_s:null,eta_seconds:null,queue_position:1,url:KU+'devdocs/devdocs_en_rust_2026-04.zim'},
+     u:KU+'devdocs/devdocs_en_rust_2026-04.zim'}),
+  R({i:'devdocs typescript',b:'devdocs typescript',t:'devdocs — TypeScript',s:M(1),st:'absent',u:KU+'devdocs/devdocs_en_typescript_2026-04.zim'}),
+  R({i:'superuser',b:'superuser',t:'Super User',m:'text+images',s:G(3.7),st:'downloading',
+     n:'writing superuser.com_en_all_2026-07.zim.part',
+     p:{bytes:1708323242,total_bytes:3972844749,percent:43,rate_bytes_s:50331648,eta_seconds:45,queue_position:0,
+        url:KU+'stack_exchange/superuser.com_en_all_2026-07.zim'},
+     u:KU+'stack_exchange/superuser.com_en_all_2026-07.zim'}),
+
+  R({i:'ifixit',b:'ifixit',t:'iFixit',m:'text+images',s:G(3.3),st:'failed',
+     e:{code:'checksum_mismatch',message:'checksum mismatch — the file hashes to 11c4a0e97d3f…, the catalog expects 7d90c3b2a5e1…',retryable:true,attempts:2,failed_at:'2026-11-24T19:29:41Z',partial_removed:true},
+     u:KU+'ifixit/ifixit_en_all_2025-12.zim'}),
+  R({i:'electronics_en_all_2026-01',b:'electronics',
+     t:'Electrical Engineering Stack Exchange',m:'text+images',s:G(4),st:'downloaded',
+     n:'on disk — confirmed when the engine starts',
+     ident:ID('filename','electronics_en_all_2026-01','Electrical Engineering Q&A','2026-01'),
+     f:F('electronics_en_all_2026-01.zim',G(4),'2026-01-08T14:22:37Z','7f3c8e19d2a45b6c8e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e',true),
+     sv:IDF()}),
+
+  R({i:'cooking.stackexchange.com_en_all_2026-06',b:'cooking.stackexchange.com',
+     t:'Cooking Stack Exchange',m:'text+images',s:214748365,st:'downloaded',
+     n:'in the folder since 19:38 — identified on scan',
+     ident:ID('filename','cooking.stackexchange.com_en_all_2026-06','Cooking Stack Exchange','2026-06'),
+     f:F('cooking.stackexchange.com_en_all_2026-06.zim',214748365,'2026-11-24T19:38:12Z','e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a',true),
+     sv:IDF()})
+ ],
+ tasks:[],
+ notices:[
+  {id:'engine-down',level:'warn',text:'Engine is down — 3 books on disk, none served. Search and page links are dead until it is started.',since:'2026-11-24T19:41:02Z',action:{verb:'engine_start',label:'Start engine'}}
+ ]
+};
+var MBU=1048576;
+/* 5a called M() before MBU was assigned (var hoisting leaves it undefined at literal-evaluation
+   time); the hoisted definition below reads the fallback, so the devdocs rows keep their sizes. */
+function M(x){return Math.round(x*(MBU||1048576));}
+
+/* ══ mode + state ══ */
+var QS={};(function(){var q=location.search.replace(/^\?/,'');if(!q)return;
+  q.split('&').forEach(function(kv){if(!kv)return;var p=kv.indexOf('=');
+    if(p<0){QS[decodeURIComponent(kv)]='1';}
+    else{QS[decodeURIComponent(kv.slice(0,p))]=decodeURIComponent(kv.slice(p+1));}});})();
+var USE_MOCK=(location.protocol==='file:')||(QS.mock!==undefined&&QS.mock!=='0'&&QS.mock!=='');
+var S=null,TIMER=null,LASTOK=0,FAILS=0,PREVIEW=null,ENG_BUSY=null,DIRTY={},UIMOVE=false,ARM={},
+    MOCK=null,MTS=0,SIM=null,LIVEWARN=null;
+var ENG_WORDS={engine_start:'starting the engine — this can take a moment',
+               engine_stop:'taking the engine down — this can take a few seconds',
+               engine_restart:'restarting the engine — this can take a moment',
+               config_apply:'applying the config — this can take a moment'};
+
+/* ══ transport (live) ══ */
+function errFrom(j,st){if(j&&j.error){return (j.error.message||'error')+(j.error.code?' ['+j.error.code+']':'');}
+  if(j&&j.message)return j.message;return 'HTTP '+st;}
+function netState(){
+  return fetch('state',{cache:'no-store'}).then(function(r){
+    return r.text().then(function(t){var j=null;try{j=JSON.parse(t);}catch(e){}
+      if(!r.ok)throw new Error(errFrom(j,r.status));
+      if(!j||!j.rows||!j.server)throw new Error('that is not a SIW /state snapshot');
+      return j;});},
+    function(){throw new Error('cannot reach the SIW server at '+location.origin);});}
+function netAction(verb,args){
+  // x-requested-with: a plain cross-origin form post cannot set this header, and any
+  // same-origin page can; the server reads it as part of the same-origin write rule.
+  return fetch('action',{method:'POST',headers:{'content-type':'application/json',
+      'x-requested-with':'siw'},
+    body:JSON.stringify({verb:verb,args:args||{}})}).then(function(r){
+      return r.text().then(function(t){var j=null;try{j=JSON.parse(t);}catch(e){}
+        if(!r.ok||!j||j.ok===false)throw new Error(errFrom(j,r.status));
+        return j.result||{};});});}
+
+/* ══ toasts ══ */
+function toast(msg,kind,meta){
+  var box=$('#toasts');if(!box)return;
+  var d=document.createElement('div');d.className='toast '+(kind||'');
+  d.innerHTML='<div class="d">'+esc(meta||(kind==='bad'?'error':(kind==='ok'?'ok':'siw')))+
+    '</div><div class="m">'+esc(msg)+'</div>';
+  d.addEventListener('click',function(){if(d.parentNode)box.removeChild(d);});
+  box.appendChild(d);
+  setTimeout(function(){if(d.parentNode)box.removeChild(d);},kind==='bad'?9000:4500);}
+
+/* ══ mock mode (no fetch: file:// and ?mock=1) ══ */
+function mockInit(){MOCK=deepCopy(MOCK_STATE);MTS=Date.now();
+  SIM={engineAt:0,engineTo:null,identAt:{},gap:0};PREVIEW=null;}
+function mockState(){mockAdvance();return Promise.resolve(MOCK);}
+function mockAction(verb,args){return sleep(80+Math.random()*130).then(function(){return mockDo(verb,args||{});});}
+function rowById(s,id){var r=s.rows||[];for(var i=0;i<r.length;i++)if(r[i].id===id)return r[i];return null;}
+function dropPart(s,name){s.corpus.parts=(s.corpus.parts||[]).filter(function(p){return p.name!==name;});}
+function partName(r){var u=r.source_url||String(r.id),m=/\/([^\/?#]+)$/.exec(u),b=m?m[1]:u;
+  return String(b).replace(/\.zim.*$/i,'')+'.zim.part';}
+function stemOf(r){if(r.file&&r.file.name)return r.file.name.replace(/\.zim$/i,'');
+  var m=/\/([^\/?#]+?)\.zim\b/i.exec(r.source_url||'');if(m)return m[1];
+  return String(r.id).replace(/\//g,'_');}
+function fakeHash(){var h='',c='0123456789abcdef';for(var i=0;i<64;i++)h+=c.charAt(Math.floor(Math.random()*16));return h;}
+function pretify(x){x=String(x).replace(/_20\d\d-\d\d$/,'').replace(/_/g,' ');
+  return x.charAt(0).toUpperCase()+x.slice(1);}
+function notice(s,id,lvl,txt,act){var n=s.notices||[];
+  for(var i=0;i<n.length;i++)if(n[i].id===id){n[i].level=lvl;n[i].text=txt;n[i].since=isoNow();n[i].action=act||null;return;}
+  s.notices.push({id:id,level:lvl,text:txt,since:isoNow(),action:act||null});}
+function dropNotice(s,id){s.notices=(s.notices||[]).filter(function(n){return n.id!==id;});}
+function configuredCount(s){return (s.rows||[]).filter(function(r){return r.file;}).length;}
+function pend(s,f,l,from,to,req){if(from===to)return;
+  s.pending_apply=s.pending_apply.filter(function(p){return p.field!==f;});
+  s.pending_apply.push({field:f,label:l,from:from,to:to,requires:req});}
+
+function mockUp(s){var e=s.engine;e.state='up';e.up=true;e.pid=21408;e.bound_on=['127.0.0.1'];
+  e.problem=null;e.uptime_seconds=0;e.last_checked=isoNow();
+  var n=configuredCount(s);e.served_books=n;e.configured_books=n;
+  e.drift={configured:n,served:n,same:true,configured_only:[],served_only:[]};
+  s.rows.forEach(function(r){if(!r.file)return;
+   if(!r.served)r.served=SVC(isoNow(),e.url+'/content/'+stemOf(r)+'/',e.url+'/content/'+stemOf(r)+'/',true);
+   else{r.served.confirmed=true;r.served.seen_at=isoNow();
+    if(!r.served.url)r.served.url=e.url+'/content/'+stemOf(r)+'/';
+    if(!r.served.page_url)r.served.page_url=e.url+'/content/'+stemOf(r)+'/';}
+   r.state='served';r.note=null;});
+  dropNotice(s,'engine-down');
+  notice(s,'engine-up','ok','Engine up — '+n+' book'+(n===1?'':'s')+' served at '+e.url+' ('+e.form+' launch form). The list above links straight into the corpus.');}
+function mockOff(s){var e=s.engine;e.state='down';e.up=false;e.pid=null;e.bound_on=[];
+  e.served_books=null;e.uptime_seconds=null;e.drift=null;
+  e.problem='nothing listening on '+e.host+':'+e.port;
+  s.rows.forEach(function(r){if(r.served)r.served.confirmed=false;});
+  dropNotice(s,'engine-up');
+  notice(s,'engine-down','warn','Engine is down — books on disk, none served. Search and page links are dead until it is started.',{verb:'engine_start',label:'Start engine'});}
+function mockStart(r){r.state='downloading';r.note='writing '+partName(r);
+  r.progress={bytes:0,total_bytes:r.size_bytes,percent:0,rate_bytes_s:48*1048576,
+    eta_seconds:Math.max(1,Math.round(r.size_bytes/(48*1048576))),queue_position:0,url:r.source_url||null};
+  r.actions=DEFAULT_ACTIONS(r);}
+function mockComplete(r){var s=MOCK,stem=stemOf(r),pn=partName(r);
+  r.note='on disk — identity resolved automatically';
+  r.file=F(stem+'.zim',r.size_bytes,isoNow(),null,false);
+  s.corpus.books+=1;s.corpus.bytes+=r.size_bytes;
+  SIM.identAt[r.id]=Date.now()+1400;r.actions=DEFAULT_ACTIONS(r);
+  toast(r.book+' — '+fmtBytes(r.size_bytes)+' queued — verified before it is served','ok');}
+function mockIdentify(r){var s=MOCK,stem=stemOf(r),d=/(\d{4}-\d{2})/.exec(stem);
+  r.ident=ID('filename',stem,r.title||r.book,d?d[1]:null);
+  if(r.file){r.file.verified=true;r.file.sha256=r.file.sha256||fakeHash();}
+  if(!r.served)r.served=IDF();
+  if(r.served.confirmed)r.state='served';
+  r.note=s.engine.up?null:'on disk — confirmed when the engine starts';
+  r.actions=DEFAULT_ACTIONS(r);}
+function mockMoveDone(s,t){t.state='done';t.done_bytes=t.bytes;t.rate_bytes_s=null;t.eta_seconds=0;
+  s.corpus.directory=t.to;UIMOVE=false;
+  notice(s,'move-done','ok','Corpus moved to '+t.to+' — '+fmtBytes(t.bytes)+' in '+s.corpus.books+' files.');}
+function mockAdvance(){
+  var now=Date.now(),dt=Math.min(4,(now-MTS)/1000);MTS=now;var s=MOCK;if(!s)return;
+  if(s.server.uptime_seconds!=null)s.server.uptime_seconds+=dt;
+  if(s.engine.up&&s.engine.uptime_seconds!=null)s.engine.uptime_seconds+=dt;
+  if(SIM.engineAt&&now>=SIM.engineAt){var to=SIM.engineTo;SIM.engineAt=0;SIM.engineTo=null;
+    if(to==='up')mockUp(s);else if(to==='down')mockOff(s);
+    else if(to==='restart'){mockOff(s);SIM.engineAt=now+900;SIM.engineTo='up';}}
+  var active=false;
+  s.rows.forEach(function(r){
+    if(r.state!=='downloading')return;active=true;
+    var p=r.progress||{},rate=p.rate_bytes_s||42*1048576;
+    p.bytes=Math.min(p.total_bytes,p.bytes+rate*dt*(0.85+Math.random()*0.3));
+    p.percent=p.total_bytes?Math.round(p.bytes/p.total_bytes*100):0;
+    p.eta_seconds=rate?Math.max(0,Math.round((p.total_bytes-p.bytes)/rate)):null;
+    dropPart(s,partName(r));s.corpus.parts.push({name:partName(r),bytes:Math.round(p.bytes)});
+    if(p.bytes>=p.total_bytes)mockComplete(r);});
+  if(!active){var q=s.rows.filter(function(r){return r.state==='queued';}).sort(function(a,b){
+      return ((a.progress&&a.progress.queue_position)||0)-((b.progress&&b.progress.queue_position)||0);});
+    if(q.length&&now-SIM.gap>800){SIM.gap=now;mockStart(q[0]);}}
+  Object.keys(SIM.identAt).forEach(function(id){if(now>=SIM.identAt[id]){delete SIM.identAt[id];
+    var r=rowById(s,id);if(r&&r.state==='downloaded')mockIdentify(r);}});
+  (s.tasks||[]).forEach(function(t){if(t.state!=='running')return;
+    var rate=Math.max(t.bytes*0.07,64*1048576);
+    t.done_bytes=Math.min(t.bytes,t.done_bytes+rate*dt);t.rate_bytes_s=rate;
+    t.eta_seconds=Math.max(0,Math.round((t.bytes-t.done_bytes)/rate));
+    if(t.done_bytes>=t.bytes)mockMoveDone(s,t);});
+  s.engine.last_checked=isoNow();}
+function mockPreview(url){
+  if(!/^https?:\/\/\S+$/i.test(String(url||'')))
+    throw new Error('paste an http(s) URL — a catalog entry or a direct .zim link [unrecognized_url]');
+  var m=/\/([^\/?#]+?)\.zim\b/i.exec(url),kind=m?'zim':'catalog_entry',
+      stem=m?m[1]:decodeURIComponent(String(url).split(/[?#]/)[0].split('/').pop()||'entry').replace(/(\.meta4|\/)$/,''),
+      low=stem.toLowerCase(),B=1073741824,size=B;
+  if(low.indexOf('stackoverflow')>=0)size=Math.round(107*B);
+  else if(low.indexOf('wikipedia')>=0)size=Math.round((low.indexOf('maxi')>=0?118.7:(low.indexOf('nopic')>=0?49.1:13.4))*B);
+  else if(low.indexOf('superuser')>=0)size=Math.round(3.7*B);
+  else if(low.indexOf('serverfault')>=0)size=Math.round(1.5*B);
+  else if(low.indexOf('devdocs')>=0)size=6*1048576;
+  else if(low.indexOf('ifixit')>=0)size=Math.round(3.3*B);
+  var free=MOCK.corpus.bytes_free;
+  return {kind:kind,url:url,name:stem+'.zim',title:pretify(stem),size_bytes:size,
+    sha256:fakeHash(),checksum_source:(kind==='zim'?'meta4':'catalog entry → meta4'),
+    book:stem.split('_')[0],build:(/maxi|nopic|mini/.exec(stem)||[null,null])[0]||null,
+    media:(/maxi/.test(stem)?'text+images':'text'),
+    warning:(size>free?('needs '+fmtBytes(size)+', only '+fmtBytes(free)+' free in the corpus folder'):null)};}
+function queueIt(r,s){r.state='queued';r.error=null;r.note='queued';
+  r.progress={bytes:0,total_bytes:r.size_bytes,percent:0,rate_bytes_s:null,eta_seconds:null,
+    queue_position:(s.rows.filter(function(x){return x.state==='queued';}).length+1),url:r.source_url||null};
+  r.actions=DEFAULT_ACTIONS(r);}
+function mockDo(v,a){a=a||{};var s=MOCK,now=Date.now();
+  function need(id){var r=rowById(s,String(id));if(!r)throw new Error('no row '+id+' [404]');return r;}
+  switch(v){
+  case 'engine_start':
+    if(s.engine.up)throw new Error('the engine is already up on port '+s.engine.port+' [engine_running]');
+    s.engine.state='starting';SIM.engineAt=now+1500;SIM.engineTo='up';return {engine:s.engine};
+  case 'engine_stop':
+    if(!s.engine.up)throw new Error('the engine is not running [not_running]');
+    s.engine.state='stopping';SIM.engineAt=now+900;SIM.engineTo='down';return {engine:s.engine};
+  case 'engine_restart':
+    s.engine.state='stopping';SIM.engineAt=now+1000;SIM.engineTo='restart';return {engine:s.engine};
+  case 'config_apply':
+    if(!s.pending_apply.length)return {pending_apply:[],engine:s.engine};
+    s.pending_apply.forEach(function(p){if(p.field==='launch')s.engine.form=p.to;});
+    s.pending_apply=[];
+    notice(s,'applied','ok','Configuration applied — running values match the config file.'+(s.engine.up?' (engine restarted)':''));
+    if(s.engine.up){SIM.engineAt=now+1200;SIM.engineTo='restart';}
+    return {pending_apply:[],engine:s.engine};
+  case 'config_discard':
+    var dropped=s.pending_apply.map(function(p){return p.field;});s.pending_apply=[];
+    notice(s,'discarded','info','Discarded the un-applied change: '+dropped.join(', ')+'.');
+    return {pending_apply:[]};
+  case 'download':
+    var r=need(a.id);
+    if(r.state==='queued'||r.state==='downloading')return {row:r};
+    if(r.state!=='absent'&&r.state!=='failed')throw new Error(r.state+' cannot start a download [bad_state]');
+    if(r.size_bytes>s.corpus.bytes_free)throw new Error('needs '+fmtBytes(r.size_bytes)+', only '+fmtBytes(s.corpus.bytes_free)+' free [no_space]');
+    queueIt(r,s);return {row:r};
+  case 'download_all':
+    var st=[];s.rows.forEach(function(x){if(x.state==='absent'&&x.defaulted!==false){queueIt(x,s);st.push(x.id);}});
+    if(!st.length)throw new Error('nothing left to download [nothing_to_download]');
+    SIM.gap=now;return {started:st};
+  case 'cancel':
+    var rc=need(a.id);if(rc.state!=='downloading'&&rc.state!=='queued')return {row:rc};
+    dropPart(s,partName(rc));rc.state='absent';rc.progress=null;
+    rc.note='cancelled — a partial file is kept in the folder for a resume';
+    rc.actions=DEFAULT_ACTIONS(rc);return {row:rc};
+  case 'retry':
+    var rr=need(a.id);if(rr.state!=='failed')throw new Error('only a failed row can be retried [bad_state]');
+    queueIt(rr,s);rr.note='retry queued';return {row:rr};
+  case 'remove':
+    var rx=need(a.id);if(!rx.file)throw new Error('nothing on disk to remove [no_file]');
+    s.corpus.bytes-=rx.file.bytes;s.corpus.books-=1;
+    if(rx.source_url){rx.state='absent';rx.file=null;rx.ident=null;rx.served=null;
+      rx.note='removed from disk — still in the suggested set';}
+    else s.rows=s.rows.filter(function(x){return x.id!==rx.id;});
+    s.rows.forEach(function(x){x.actions=DEFAULT_ACTIONS(x);});return {rows:s.rows};
+  case 'scan':
+    s.corpus.scanned_at=isoNow();
+    notice(s,'scan','info','Scan complete — '+s.corpus.books+' books, '+
+      (s.corpus.parts||[]).length+' partial, '+fmtBytes(s.corpus.bytes)+' on disk.');
+    return {corpus:s.corpus,added:[]};
+  case 'preview':
+    PREVIEW=mockPreview(a.url);return {preview:PREVIEW};
+  case 'download_url':
+    if(!PREVIEW)throw new Error('preview the URL before downloading it [preview_required]');
+    var idp=PREVIEW.name.replace(/\.zim$/i,'');
+    if(rowById(s,idp))throw new Error('that build is already in the list [duplicate]');
+    var nr=R({i:idp,o:'pasted',b:PREVIEW.book||idp,t:PREVIEW.title,
+      m:PREVIEW.media||'unknown',s:PREVIEW.size_bytes,st:'queued',u:PREVIEW.url});
+    nr.progress={bytes:0,total_bytes:PREVIEW.size_bytes,percent:0,rate_bytes_s:null,eta_seconds:null,
+      queue_position:1,url:PREVIEW.url};
+    s.rows.push(nr);PREVIEW=null;return {row:nr};
+  case 'set_settings':
+    var nb=(a.bind!==undefined)?String(a.bind).trim():s.server.bind;
+    var np=(a.port!==undefined)?parseInt(a.port,10):s.server.port;
+    if(!(np>=1&&np<=65535))throw new Error('port wants an integer between 1 and 65535 [bad_port]');
+    var cr=s.server.credentials?deepCopy(s.server.credentials):{mode:'none',configured:false,username:null};
+    if(a.username!==undefined)cr.username=String(a.username).trim()||null;
+    if(a.password==='')cr={mode:'none',configured:false,username:null};
+    else if(a.password!==undefined&&a.password!=='')cr={mode:'basic',configured:true,username:cr.username||'siw'};
+    if(!isLoopback(nb)&&!cr.configured)
+      throw new Error('binding on '+nb+' needs a username and password — refused [credentials_required]');
+    pend(s,'bind','API bind address',s.server.bind,nb,'server_restart');
+    pend(s,'port','API port',s.server.port,np,'server_restart');
+    s.server.bind=nb;s.server.bound_on=[nb];s.server.port=np;s.server.loopback=isLoopback(nb);
+    s.server.credentials=cr;
+    s.server.url='http://'+(nb.indexOf(':')>=0?'['+nb+']':nb)+':'+np;
+    s.server.warning=(!s.server.loopback&&!cr.configured)?('bound on '+nb+' without credentials — refused'):null;
+    return {server:s.server,pending_apply:s.pending_apply};
+  case 'set_corpus_dir':
+    var dst=String(a.path||'').trim();
+    if(!dst)throw new Error('name a directory [bad_path]');
+    if(dst===s.corpus.directory)return {corpus:s.corpus};
+    if(s.corpus.books>0&&a.move!==true)
+      throw new Error(s.corpus.books+' books are in the corpus — a move must be asked for explicitly [move_required]');
+    if((s.tasks||[]).some(function(t){return t.state==='running';}))throw new Error('another move is running [busy]');
+    if(s.corpus.books===0){s.corpus.directory=dst;return {corpus:s.corpus};}
+    var t1={id:'mv'+now,kind:'move_corpus',label:'Move corpus to '+dst,state:'running',
+      bytes:s.corpus.bytes,done_bytes:0,rate_bytes_s:null,eta_seconds:null,
+      from:s.corpus.directory,to:dst,error:null};
+    s.tasks.push(t1);return {task:t1};
+  case 'task_cancel':
+    s.tasks=(s.tasks||[]).map(function(t){if(t.id===String(a.id)&&t.state==='running'){
+      t.state='cancelled';t.error='cancelled from the console';}return t;});
+    return {tasks:s.tasks};
+  case 'open_folder':
+    toast('Opened '+(s.corpus.directory||'the corpus folder')+' in the file manager','ok');
+    return {opened:s.corpus.directory};
+  case 'dismiss':
+    dropNotice(s,String(a.id));return {notices:s.notices};
+  default:throw new Error('unknown verb '+v+' [404]');}}
+
+/* ══ polling ══ */
+function busyNow(s){if(!s)return false;
+  var r=s.rows||[];for(var i=0;i<r.length;i++)if(r[i].state==='downloading'||r[i].state==='queued')return true;
+  var t=s.tasks||[];for(var j=0;j<t.length;j++)if(t[j].state==='running'||t[j].state==='queued')return true;
+  return false;}
+function pollMs(){
+  var ms=(S&&S.poll_after_ms)?Number(S.poll_after_ms):(busyNow(S)?2000:5000);
+  if(!isFinite(ms)||ms<=0)ms=5000;
+  if(FAILS>0)ms=Math.max(ms,Math.min(30000,5000*Math.pow(2,Math.min(3,FAILS))));
+  return clamp(ms,500,30000);}
+function schedulePoll(){if(TIMER)clearTimeout(TIMER);
+  TIMER=setTimeout(function(){if(document.hidden){schedulePoll();return;}poll(false);},pollMs());}
+function showErr(msg){var c=$('#errchip');if(!c)return;c.hidden=false;
+  c.textContent=FAILS>1?('state unavailable ×'+FAILS):'state unavailable';c.title=String(msg||'');}
+function hideErr(){var c=$('#errchip');if(c)c.hidden=true;}
+function poll(){
+  var req=USE_MOCK?mockState():netState();
+  req.then(function(s){FAILS=0;LASTOK=Date.now();S=s;hideErr();render(s);schedulePoll();},
+            function(e){FAILS++;showErr(e&&e.message);
+              if(FAILS===1||FAILS%6===0)toast('/state failed: '+((e&&e.message)||e),'bad');
+              schedulePoll();});}
+function ticker(){
+  var a=$('#age');if(a)a.textContent=LASTOK?fmtDur(Math.round((Date.now()-LASTOK)/1000)):'—';
+  var p=$('#pollchip');if(p)p.textContent=(busyNow(S)?'poll ':(FAILS?'retry ':'poll '))+(pollMs()/1000).toFixed(1)+'s'+(busyNow(S)?' · active':'');}
+/* ══ render ══ */
+function render(s){renderHead(s);renderLines(s);renderPending(s);renderNotices(s);
+  renderTableGuarded(s);renderListbar(s);renderSettings(s);renderMove(s);renderPreview();renderFoot(s);}
+function renderHead(s){var b=$('#brandver');if(b)b.textContent='v'+(s.version||'—');
+  var m=$('#mockchip');if(m)m.hidden=!USE_MOCK;}
+
+/* ── header: one line per block of truth; the rest rides the tooltips ── */
+function renderLines(s){
+ var v=s.server||{},e=s.engine||{},c=v.credentials||{},up=!!e.up,bin=e.bin||{};
+ var fetchy=['fetching','verifying','extracting'].indexOf(bin.state)>=0;
+ var srv=esc(v.url||('http://'+v.bind+':'+v.port))+' <span class="k">·</span> up '+fmtDur(v.uptime_seconds);
+ if(!v.loopback){
+   srv+=' <span class="k">·</span> <span class="a">non-loopback '+(v.bound_on&&v.bound_on.length?esc(v.bound_on.join(' ')):esc(v.bind))+'</span>';
+   srv+=c.configured
+     ?' <span class="k">·</span> <span class="g">credentials</span> <span class="k">'+esc(c.username||'basic')+'</span>'
+     :' <span class="k">·</span> <span class="r">NO CREDENTIALS</span>';}
+ var srvTitle='config: '+(v.config_path||'no config file read — defaults')+' · '+(v.platform||'');
+ var dot=up?'<span class="dot ok"></span><span class="g">UP</span>'
+   :(e.state==='starting'?'<span class="dot warn"></span><span class="a">STARTING</span>'
+    :(e.state==='stopping'?'<span class="dot warn"></span><span class="a">STOPPING</span>'
+      :'<span class="dot bad"></span><span class="r">DOWN</span>'));
+ var mid;
+ if(up){
+   mid=(e.served_books==null?'—':e.served_books)+' <span class="k">of</span> '+
+       (e.configured_books==null?'—':e.configured_books)+' <span class="k">books served</span>'+
+       (e.uptime_seconds!=null?' <span class="k">·</span> up '+fmtDur(e.uptime_seconds):'');
+ } else if(fetchy){
+   var p=bin.progress||{},tot=p.total||0,got=p.received||0,pct=tot?Math.round(100*got/tot):0;
+   mid='<span class="a">fetching kiwix-serve '+(bin.version||'')+' — '+pct+'% '
+      +'<span class="k">('+fmtBytes(got)+' of '+fmtBytes(tot)+')</span></span>';
+ } else if(e.state==='stopping'){
+   mid='<span class="a">taking the engine down…</span>';
+ } else if(e.problem){
+   mid='<span class="r">'+esc(e.problem)+'</span>';
+ } else {
+   mid='<span class="k">nothing listening</span>';
+ }
+ if(ENG_BUSY)mid='<span class="a">'+ENG_WORDS[ENG_BUSY]+'</span>';
+ var drift=(up&&e.drift&&!e.drift.same)?(' <span class="a">· drift −'+
+   (e.drift.configured_only||[]).length+' +'+(e.drift.served_only||[]).length+'</span>'):'';
+ var l2=dot+' <span class="k">·</span> '+esc(e.host||'127.0.0.1')+':'+esc(e.port)+
+   ' <span class="k">·</span> '+mid+drift+
+   (up?' <span class="k">·</span> <a class="lk" href="'+esc(e.url||'#')+'" target="_blank" rel="noreferrer">kiwix-serve ↗</a>':'');
+ var engTitle=(e.version?esc(e.version)+' · ':'')+(e.exe?esc(e.exe):'no exe configured — SIW fetches the pinned kiwix-serve')+
+   ' · launch '+esc(e.form||'—')+(e.pid?' · pid '+e.pid:'')+(e.started_by_siw===false?' · not started by SIW':'')+
+   ' · log '+(e.log_path||'—');
+ var stopping=e.state==='stopping';
+ var startTitle=up?'the engine is already up':(stopping?'the engine is being taken down':
+   (fetchy?'the kiwix-serve download is in progress — the engine starts when it lands':
+   (bin.state==='failed'?'the download failed — this retries':'spawn kiwix-serve on port '+esc(String(e.port))+(bin.state==='missing'&&!e.exe?' (downloads the pinned binary first)':''))));
+ var acts=ENG_BUSY
+  ?['Start','Stop','Restart'].map(function(l){return '<button class="btn sm" disabled title="the engine is '+
+      ENG_BUSY.replace('engine_','')+'ing">'+l+'</button>';}).join('')
+  :'<button class="btn sm'+((up||stopping)?'':' pri')+'" data-act="engine_start"'+
+     ((up||fetchy||stopping)?' disabled ':' ')+ 'title="'+esc(startTitle)+'">Start</button>'+
+   '<button class="btn sm" data-act="engine_stop"'+(up?'':' disabled title="the engine is not running"')+'>Stop</button>'+
+   '<button class="btn sm" data-act="engine_restart"'+(up?'':' disabled title="nothing to restart — use Start"')+'>Restart</button>';
+ $('#lines').innerHTML=
+   '<div class="lbl">SIW server</div><div class="val" title="'+esc(srvTitle)+'">'+srv+'</div><div class="acts"></div>'+
+   '<div class="lbl">Engine</div><div class="val" title="'+esc(engTitle)+'">'+l2+'</div><div class="acts">'+acts+'</div>';}
+
+/* ── pending-apply badge + the loud configuration warning ── */
+function warnOf(s){var v=s.server||{},c=v.credentials||{};
+ if(LIVEWARN)return LIVEWARN;
+ if(!v.loopback&&!c.configured)return {msg:'bound on '+(v.bound_on&&v.bound_on.length?v.bound_on.join(' '):v.bind)+' with no credentials',
+   why:'A reachable interface without auth is a share of this machine. Set a username and password below, or bind to 127.0.0.1 — the backend refuses to serve this configuration.'};
+ return null;}
+function renderPending(s){
+ var box=$('#pendingbox'),p=s.pending_apply||[],w=warnOf(s),h='';
+ if(w)h+='<div class="banner"><b>Refused configuration — '+esc(w.msg)+'</b><span class="why">'+esc(w.why||'')+'</span></div>';
+ if(p.length)h+='<div class="pending"><span class="t">config pending apply</span><span>'+
+   p.map(function(x){return '<span class="f">'+esc(x.label||x.field)+': '+esc(String(x.from))+' → '+esc(String(x.to))+
+     ' <span class="dim">('+esc(x.requires||'restart')+')</span></span>';}).join(' · ')+
+   '</span><span style="flex:1"></span>'+((ENG_BUSY==='config_apply')
+     ?'<button class="btn sm pri" disabled title="in progress">Applying…</button>'
+     :'<button class="btn sm pri" data-act="config_apply">Apply</button>')+
+   '<button class="btn sm gh" data-act="config_discard">Discard</button></div>';
+ box.innerHTML=h;}
+
+/* ── notices ── */
+function renderNotices(s){var h='';
+ (s.notices||[]).forEach(function(x){
+  var ab='';
+  if(x.action&&x.action.verb){
+    ab=(x.action.verb===ENG_BUSY)
+      ?'<button class="btn sm" disabled title="in progress">'+ENG_BUSY.replace('engine_','')+'ing…</button>'
+      :'<button class="btn sm" data-act="'+esc(x.action.verb)+'">'+esc(x.action.label||x.action.verb)+'</button>';} 
+  h+='<div class="note '+esc(x.level||'info')+'"><span class="txt">'+esc(x.text)+'</span>'+ab+
+    '<button class="x" data-act="dismiss" data-id="'+esc(x.id)+'" title="Dismiss">×</button></div>';});
+ $('#notices').innerHTML=h;}
+
+/* ── the list ── */
+var TSIG='',TPEND=null;
+function editingInTable(){var a=document.activeElement,w=$('#tablewrap');
+ if(!a||!w||!w.contains(a))return false;
+ return a.tagName==='INPUT'&&a.type==='text';}
+function renderTableGuarded(s){
+ var sig=JSON.stringify([s.engine&&s.engine.up,s.pending_apply||[],s.rows]);
+ if(sig===TSIG&&$('#tablewrap').firstChild)return;
+ if(editingInTable()){TPEND=sig;return;}
+ TSIG=sig;TPEND=null;renderTable(s);}
+function groupRows(s){
+ var out=[],byBook={};
+ (s.rows||[]).forEach(function(r){var k=r.book;
+   if(!Object.prototype.hasOwnProperty.call(byBook,k)){byBook[k]=[];out.push({book:k,rows:byBook[k]});}
+   byBook[k].push(r);});
+ return out;}
+function sumPend(rows){var n=0;rows.forEach(function(r){if(r.state==='absent'&&r.defaulted!==false)n+=r.size_bytes||0;});return n;}
+function pendingSum(s){return sumPend(s.rows||[]);}
+function badge(k,t){return '<span class="badge '+k+'">'+esc(t)+'</span>';}
+function dlCell(r){
+ if(r.state==='downloading'){var p=r.progress||{};
+  return '<div class="bar"><i style="width:'+pct(r)+'%"></i></div>'+
+   '<div class="det">'+pct(r)+'% · '+esc(fmtBytes(p.bytes))+' of '+esc(fmtBytes(p.total_bytes))+
+   (p.rate_bytes_s?' · '+fmtBytes(p.rate_bytes_s)+'/s':'')+(p.eta_seconds!=null?' · '+fmtDur(p.eta_seconds)+' left':'')+'</div>';}
+ if(r.state==='queued'){var q=(r.progress&&r.progress.queue_position)||1;
+  return '<div class="det'+(q>1?'':' a')+'">'+(q>1?q+'th in line — one transfer at a time':'starting the transfer…')+'</div>';}
+ if(r.state==='failed')return '<button class="ib pri" data-act="retry" data-id="'+esc(r.id)+'" title="retry the download">Retry</button>';
+ return '<span class="dim">—</span>';}
+function stateCell(r,s){var e=s.engine||{};var d='';
+ switch(r.state){
+  case 'absent':d='not on disk'+(r.note?' · '+r.note:'');break;
+  case 'queued':d='in the download queue — see the download column';break;
+  case 'downloading':d='in transfer — progress in the download column'+(r.note?' · '+r.note:'');break;
+  case 'downloaded':d='on disk — served the moment the engine confirms it'+(r.note?' · '+r.note:'');break;
+  case 'served':d=(e.up?'in the pick, not in the engine’s catalog':'engine down — not confirmed')+
+    ((r.served&&r.served.seen_at)?' · last seen '+ago(r.served.seen_at):'')+
+    ((r.served&&r.served.page_url)?' · '+r.served.page_url:'');break;
+  case 'failed':{var x=r.error||{};
+   d=(x.message||'download failed')+(x.attempts?' · attempt '+x.attempts:'')+(x.failed_at?' · '+ago(x.failed_at):'');break;}
+  default:d='unknown state — not hidden, not modified'+(r.note?' · '+r.note:'');}
+ var lbl=r.state||'?';
+ var k=r.state==='failed'?'b-r':r.state==='served'?((r.served&&r.served.confirmed)?'b-g':'b-w'):r.state==='downloaded'?'b-i':r.state==='absent'?'b-n':'b-w';
+ return '<div class="det" title="'+esc(d)+'">'+badge(k,lbl)+'</div>';}
+function removeBtn(r){var armed=ARM[r.id]&&Date.now()<ARM[r.id];
+ return '<button class="ib gh danger'+(armed?' arm':'')+'" data-act="remove" data-arm="1" data-id="'+esc(r.id)+
+   '" title="delete this file from the corpus folder">'+(armed?'Confirm?':'Remove')+'</button>'};
+function actCell(r,s){
+ switch(r.state){
+  case 'absent':return '<button class="ib pri" data-act="download" data-id="'+esc(r.id)+'" title="start the download">Download</button>';
+  case 'queued':case 'downloading':return '<button class="ib" data-act="cancel" data-id="'+esc(r.id)+'" title="cancel this download">Cancel</button>';
+  case 'failed':return removeBtn(r);
+   return '<a class="ib pri" href="'+esc(u)+'" target="_blank" rel="noreferrer" title="open the served page">Open</a>'+removeBtn(r);
+  default:return r.file?removeBtn(r):'';}}
+function rowHtml(r,fam,s){
+ var md=r.media==='text+images'?'i':(r.media==='text'?'t':'u');
+ return '<tr class="row st-'+esc(r.state)+'" data-id="'+esc(r.id)+'">'+
+  '<td class="c-book'+(fam?' fam':'')+'"'+(fam?' style="position:relative"':'')+' title="'+esc((r.title||r.book)+(r.ident?' · identified via '+r.ident.rung:''))+'">'+
+    (fam?'<span class="tick">↳</span>':'')+(r.state==='served'&&r.served&&r.served.page_url?'<a class="bklnk" href="'+esc(r.served.page_url)+'" target="_blank" rel="noreferrer" title="open the served page"><span class="bk">'+esc(r.book)+'</span></a>':'<span class="bk">'+esc(r.book)+'</span>')+
+    '</td>'+
+  '<td class="c-build mono">'+(r.build?esc(r.build):'<span class="dim">—</span>')+'</td>'+
+  '<td class="c-size mono num">'+esc(fmtBytes(r.size_bytes))+'</td>'+
+  '<td class="c-media"><span class="md-'+md+'">'+esc(mediaLabel(r.media))+'</span></td>'+
+  '<td class="c-state">'+stateCell(r,s)+'</td>'+
+  '<td class="c-dl">'+dlCell(r)+'</td>'+
+  '<td class="c-act">'+actCell(r,s)+'</td></tr>';}
+function renderTable(s){
+ var h='<table class="grid"><colgroup><col class="w-book"><col class="w-build">'+
+   '<col class="w-size"><col class="w-media"><col class="w-state"><col class="w-dl"><col class="w-act"></colgroup><thead><tr>'+
+   '<th>Book</th><th>Build</th><th class="num">Size</th><th>Media</th><th>State</th><th>Download</th><th class="c-act">Action</th>'+
+   '</tr></thead><tbody>';
+ groupRows(s).forEach(function(bl){bl.rows.forEach(function(r,i){h+=rowHtml(r,!!(i>0&&r.build),s);});});
+ $('#tablewrap').innerHTML=h+'</tbody></table>';
+ }
+
+/* ── the summed footer ── */
+function renderListbar(s){
+ var rows=s.rows||[],np=0,fail=0,failb=0,infl=0,ond=0,files=0;
+ rows.forEach(function(r){
+  if(r.state==='absent'&&r.defaulted!==false)np++;
+  if(r.state==='failed'){fail++;failb+=r.size_bytes||0;}
+  if(r.state==='downloading'||r.state==='queued')infl++;
+  if(r.file){files++;ond+=r.file.bytes;}});
+ var pd=sumPend(rows),free=(s.corpus||{}).bytes_free||0,over=pd>free;
+ var h='<span class="tot'+(pd?'':' zero')+'">'+(pd?('+ '+esc(fmtBytes(pd))+' to download'):'nothing to download')+'</span>'+
+  '<span class="cnt">'+np+' book'+(np===1?'':'s')+'</span>'+
+  (infl?('<span class="cnt">'+infl+' in flight</span>'):'')+
+  (fail?('<span class="cnt">'+fail+' failed · '+esc(fmtBytes(failb))+' to retry</span>'):'')+
+  '<span class="spacer"></span><span class="cnt">on disk '+esc(fmtBytes(ond))+' · '+files+
+  ' files · '+esc(fmtBytes(free))+' free</span>'+
+  '<button class="btn pri" data-act="download_all"'+((np&&!over)?'':' disabled')+
+  ' title="'+(over?'exceeds the free space in the corpus folder':(np?'download every undownloaded book, one transfer at a time':'nothing left to download'))+
+  '">Start all downloads</button>'+
+  (over?('<span class="cap">the download set needs '+esc(fmtBytes(pd))+' and only '+esc(fmtBytes(free))+
+        ' is free — free the folder or move the corpus</span>'):'');
+ $('#listbar').innerHTML=h;
+ var hint=$('#listhint');
+ if(hint)hint.textContent=rows.length+' rows · '+files+' on disk'+(infl?' · '+infl+' in flight':'');
+ }
+
+/* ── last-tier preview card ── */
+function renderPreview(){
+ var card=$('#prevcard'),st=$('#prevestate');if(!card)return;
+ if(!PREVIEW){card.innerHTML='<div class="prevcard empty">Preview shows the size and checksum '
+  +'before anything is downloaded.</div>';
+  if(st&&st.getAttribute('data-hold')!=='busy')st.textContent='no URL previewed';return;}
+ var p=PREVIEW;if(st)st.textContent='previewed via '+(p.checksum_source||'.meta4');
+ card.innerHTML='<div class="prevcard"><div class="pt">'+esc(p.title||p.name)+
+  ' <span class="dim mono">'+esc(p.build?('· '+p.build):'')+'</span></div><div class="pk">'+
+  '<span>file</span><b>'+esc(p.name)+'</b>'+
+  '<span>size</span><b>'+esc(fmtBytes(p.size_bytes))+'</b>'+
+  '<span>sha256</span><b>'+esc(p.sha256?String(p.sha256).slice(0,32)+'…':'unknown')+'</b>'+
+  '<span>checked against</span><b>'+esc(p.checksum_source||'—')+'</b>'+
+  '<span>media</span><b>'+esc(mediaLabel(p.media))+'</b>'+
+  '<span>url</span><b>'+esc(p.url)+'</b></div>'+
+  (p.warning?('<div class="hint-s r">'+esc(p.warning)+'</div>'):'')+
+  '<div class="acts"><button class="btn sm pri" data-act="download_url">Download it</button>'+
+  '<button class="btn sm gh" data-act="drop_preview">Cancel</button>'+
+  '<span class="dim" style="font-size:11px">nothing has been fetched yet — the row appears only when you confirm</span></div></div>';}
+
+
+/* ── settings ── */
+function formVals(){var p=$('#sport')?$('#sport').value:'';
+ return {bind:($('#sbin').value||'').trim(),port:parseInt(p,10),
+   username:($('#suser').value||'').trim(),password:$('#spass').value};}
+function validateSettings(){
+ var s=S;if(!s)return;var f=formVals(),c=s.server.credentials||{};
+ var creds=(f.password&&f.password.length>0)||!!(c.configured&&f.username!=='');
+ var loop=isLoopback(f.bind),bad=!loop&&!creds,badport=!(f.port>=1&&f.port<=65535),box=$('#srule');
+ box.className='rulebox'+(bad?' bad':((!loop&&creds)?' ok':''));
+ box.innerHTML=bad?('<b>Refused.</b> '+esc(f.bind||'—')+' is reachable beyond this machine and there is no password. Set credentials, or bind to 127.0.0.1. The backend refuses the same save.')
+   :(loop?('Loopback ('+esc(f.bind||'127.0.0.1')+'): only this machine can connect, so credentials are optional. Set them before binding beyond loopback.')
+   :('Reachable beyond loopback on '+esc(f.bind)+' — credentials '+(creds?'set.':'required.')));
+ var sv=$('#ssave');if(sv)sv.disabled=bad||badport;
+ var sh=$('#ssavehint');if(sh)sh.innerHTML=badport?'<span class="r">port wants 1…65535</span>':'';
+ LIVEWARN=bad?{msg:'the settings form says bind '+f.bind+' with no credentials',
+   why:'Save is blocked while the form reads this. It is only a warning here because the running server has not been changed yet.'}:null;}
+function renderSettings(s){
+ var c=s.corpus||{},v=s.server||{},e=s.engine||{},free=c.bytes_free||0,tot=c.bytes_total||0,pd=pendingSum(s);
+ $('#cdir').textContent=c.directory||'not set';
+ $('#cdir').className='v'+(c.exists?'':' r');
+ $('#cused').textContent=fmtBytes(c.bytes||0)+' · '+c.books+' books'+((c.parts||[]).length?(' · '+(c.parts||[]).length+' partial'):'');
+ $('#cfree').textContent=fmtBytes(free)+(tot?' of '+fmtBytes(tot):'');
+ $('#cscan').textContent=(c.scanned_at?ago(c.scanned_at):'never')+
+   ((c.scan_errors&&c.scan_errors.length)?(' · '+c.scan_errors.length+' unreadable'):'');
+ var fi=$('#freebar').querySelector('i');if(fi)fi.style.width=(tot?clamp(Math.round(free/tot*100),0,100):0)+'%';
+ $('#freetxt').innerHTML=(pd>free?'<span class="r">':'<span class="dim">')+
+   'the download set needs '+esc(fmtBytes(pd))+(pd>free?' — more than is free</span>':'</span>');
+ var fills={sbin:v.bind,sport:v.port,suser:(v.credentials||{}).username||''};
+ Object.keys(fills).forEach(function(k){if(!DIRTY[k])$('#'+k).value=fills[k];});
+ if(!DIRTY.spass)$('#spass').value='';
+ $('#pwstate').textContent=v.credentials&&v.credentials.configured
+   ?'(a password is stored — leave this empty to keep it; clear the username to drop credentials)':'(none set)';
+ validateSettings();
+ $('#rver').textContent=(s.product||'siw')+' '+s.version+' — '+(s.name||'');
+ $('#rcfg').textContent=v.config_path||'defaults (no file read)';
+ $('#rplat').textContent=v.platform||'—';
+ var bin=e.bin||{};
+ $('#rbin').textContent=(bin.state==='fetching'||bin.state==='verifying'||bin.state==='extracting')
+   ?('fetching the pinned '+(bin.version||'')+'…')
+   :(bin.state==='failed')?('the pinned download failed — Start retries')
+   :(e.exe||bin.path||'not set')+(bin.state==='fetched'?(' · pinned '+ (bin.version||'') +' — fetched and sha256-verified by SIW'):'');
+ $('#rlog').textContent=e.log_path||'—';
+ $('#rstate').textContent=(USE_MOCK?'inline mock constant':(location.origin+'/state'))+' · snapshot '+ago(s.generated_at);
+}
+function renderMove(s){
+ var box=$('#movewrap');if(!box)return;var c=s.corpus||{};
+ var t=(s.tasks||[]).filter(function(x){return x.state==='running'||x.state==='queued';})[0];
+ if(t){var pc=t.bytes?Math.round(t.done_bytes/t.bytes*100):0;
+  box.innerHTML='<div class="movebox"><span class="dim" style="font-size:10px;letter-spacing:.06em;text-transform:uppercase">moving the corpus — not a re-point</span>'+
+   '<div class="mono" style="font-size:11px">'+esc(t.from)+' <span class="dim">→</span> '+esc(t.to)+'</div>'+
+   '<div class="bar"><i style="width:'+pc+'%"></i></div>'+
+   '<div class="hint-s">'+pc+'% · '+esc(fmtBytes(t.done_bytes))+' of '+esc(fmtBytes(t.bytes))+
+     (t.eta_seconds?(' · '+esc(fmtDur(t.eta_seconds))+' left'):'')+'</div>'+
+   '<div><button class="btn sm gh" data-act="task_cancel" data-id="'+esc(t.id)+'">Cancel move</button></div></div>';return;}
+ var bad=(s.tasks||[]).filter(function(x){return x.state==='failed'||x.state==='cancelled';}).slice(-1)[0];
+ if(bad&&!UIMOVE){box.innerHTML='<div class="rulebox bad">the last move was '+esc(bad.state)+
+   (bad.error?(' — '+esc(bad.error)):'')+'. The corpus is where it was. <button class="btn sm gh" data-act="retry_move">Try again</button></div>';return;}
+ if(!UIMOVE){box.innerHTML='';return;}
+ var need=(c.books||0)>0;
+ // The box re-renders on every poll; the typed value (and caret) must ride the rebuild,
+ // or a poll between typing and clicking wipes the path and Move sends a same-dir no-op.
+ var old=$('#mvto'),typed=old?old.value:null,focused=old&&document.activeElement===old,
+     selS=old&&old.selectionStart!=null?old.selectionStart:null;
+ box.innerHTML='<div class="movebox"><span class="lbl-s">new ZIM directory</span>'+
+  '<input class="txt" id="mvto" value="'+esc(typed!==null?typed:(c.directory||''))+'">'+
+  '<div class="hint-s">'+(need?('this folder holds <b>'+c.books+' books · '+esc(fmtBytes(c.bytes||0))+
+     '</b>. Changing it is an explicit <b>move</b>: copy, verify, then delete the originals — never a silent re-point.')
+     :'the folder is empty, so the location is simply re-pointed.')+'</div>'+
+  '<div class="hint-s">free space at the destination is checked when the move starts.</div>'+
+  '<div><button class="btn sm pri" data-act="do_move">'+(need?('Move '+esc(fmtBytes(c.bytes||0))+' · '+c.books+' files'):'Set location')+'</button> '+
+  '<button class="btn sm gh" data-act="cancel_move">Cancel</button></div></div>';
+ var nv=$('#mvto');
+ if(focused&&nv){nv.focus();if(selS!=null){try{nv.setSelectionRange(selS,selS);}catch(e){}}}
+}
+function renderFoot(s){var e=s.engine||{};
+ $('#foot').innerHTML='<span>GET /state · POST /action</span><span>poll '+(pollMs()/1000).toFixed(1)+'s'+
+   (busyNow(s)?' · active':'')+'</span><span>'+(USE_MOCK?'mock':'live')+'</span>'+
+   '<span>snapshot '+esc(s.generated_at||'')+'</span><span>engine '+esc(e.state||'?')+'</span>'+
+   '<span>'+(s.rows||[]).length+' rows</span>'+
+   (s.catalog_link?('<span><a href="'+esc(s.catalog_link)+'" target="_blank" rel="noreferrer">kiwix catalog ↗</a></span>'):'');}
+
+/* ══ actions ══ */
+function armIfNeeded(el){var id=el.getAttribute('data-id');
+ if(ARM[id]&&Date.now()<ARM[id])return true;
+ ARM[id]=Date.now()+5000;el.classList.add('arm');el.textContent='Confirm remove?';
+ toast('click again to delete this file from the corpus folder','warn');return false;}
+function runAction(verb,args,el){
+ if(verb==='drop_preview'){PREVIEW=null;renderPreview();return;}
+ if(verb==='cancel_move'){UIMOVE=false;if(S)render(S);return;}
+ if(verb==='retry_move'){UIMOVE=true;if(S)render(S);return;}
+ if(verb==='do_move'){var m=document.getElementById('mvto');
+   verb='set_corpus_dir';args={path:m?String(m.value).trim():'',move:true};}
+ if(ENG_WORDS[verb]){
+   if(ENG_BUSY)return;
+   ENG_BUSY=verb;toast(ENG_WORDS[verb],'warn');if(S)render(S);}
+ if(el){el.setAttribute('aria-busy','true');}
+ var p=USE_MOCK?mockAction(verb,args):netAction(verb,args);
+ p.then(function(res){
+   ENG_BUSY=null;
+   if(verb==='preview'){PREVIEW=res.preview||null;renderPreview();}
+   if(res&&res.server&&res.pending_apply&&res.pending_apply.length)
+     toast('saved — '+(res.pending_apply.map(function(x){return x.field;}).join(', '))+' needs apply','ok');
+   if(verb==='config_apply')toast('config applied','ok');
+   poll();},
+   function(e){var m=(e&&e.message)||String(e);
+     ENG_BUSY=null;
+     if(verb==='preview'){PREVIEW=null;var st=$('#prevestate');if(st)st.textContent='preview failed';}
+     // A server-restarting apply re-execs the process before it can answer: the connection
+     // dying mid-flight is the expected shape of success, not a fault.
+     if(verb==='config_apply'&&/failed to fetch|network error|load failed/i.test(m)){
+       toast('the server is applying and restarting — the console will reconnect','warn');
+     }else{
+       toast(verb+': '+m,'bad');}
+     poll();});}
+function doPreview(){
+ var u=$('#pasteurl').value.trim();
+ if(!u){toast("paste the book's \"Direct\" download link (the catalog's Download dialog)",'warn');return;}
+ var st=$('#prevestate');if(st)st.textContent='reading '+(u.length>52?u.slice(0,52)+'…':u)+' …';
+ var p=USE_MOCK?mockAction('preview',{url:u}):netAction('preview',{url:u});
+ p.then(function(res){PREVIEW=res.preview||null;renderPreview();
+   if(!PREVIEW&&st)st.textContent='nothing to preview';},
+   function(e){PREVIEW=null;renderPreview();
+     var st2=$('#prevestate');if(st2)st2.textContent='preview failed';
+     toast('preview: '+((e&&e.message)||e),'bad');});}
+function saveSettings(){
+ if(!S)return;var v=S.server||{},f=formVals(),args={};
+ if(f.bind&&f.bind!==v.bind)args.bind=f.bind;
+ if(f.port&&f.port!==v.port)args.port=f.port;
+ var cu=(v.credentials||{}).username||'';
+ if(f.username!==cu)args.username=f.username;
+ if(f.password)args.password=f.password;
+ else if((v.credentials||{}).configured&&f.username==='')args.password='';
+ if(!Object.keys(args).length){DIRTY={};toast('nothing changed','ok');return;}
+ DIRTY={};LIVEWARN=null;runAction('set_settings',args,$('#ssave'));}
+
+/* ══ wiring ══ */
+function wire(){
+ document.addEventListener('click',function(ev){
+  var t=ev.target&&ev.target.closest?ev.target.closest('[data-act]'):null;
+  if(!t)return;
+  if(t.tagName==='A'&&t.getAttribute('href')&&t.getAttribute('href')!=='#')return;
+  if(t.hasAttribute&&t.hasAttribute('disabled'))return;
+  var verb=t.getAttribute('data-act'),args={};
+  if(t.getAttribute('data-id'))args.id=t.getAttribute('data-id');
+  if(t.tagName!=='A')ev.preventDefault();
+  if(verb==='remove'&&!armIfNeeded(t))return;
+  runAction(verb,args,t);});
+ var tw=$('#tablewrap');
+ tw.addEventListener('focusout',function(e){
+   var to=e.relatedTarget;if(to&&tw.contains(to))return;
+   TSIG='';if(S)render(S);});
+ $('#refreshbtn').addEventListener('click',function(){poll();});
+ $('#openfolder').addEventListener('click',function(){runAction('open_folder',{});});
+ $('#chgdir').addEventListener('click',function(){UIMOVE=!UIMOVE;if(S)render(S);});
+ $('#rescan').addEventListener('click',function(){runAction('scan',{});});
+ $('#previewbtn').addEventListener('click',function(){doPreview();});
+ $('#pasteurl').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doPreview();}});
+ ['sbin','sport','suser','spass'].forEach(function(id){
+   $('#'+id).addEventListener('input',function(){DIRTY[id]=1;validateSettings();});});
+ $('#ssave').addEventListener('click',function(){saveSettings();});
+ document.addEventListener('visibilitychange',function(){if(!document.hidden)poll();});
+}
+
+/* ══ boot ══ */
+function setHH(){var h=document.querySelector('header.top');
+ if(h)document.documentElement.style.setProperty('--hh',h.offsetHeight+'px');}
+function boot(){
+ if(USE_MOCK)mockInit();
+ wire();
+ var m=$('#mockchip');if(m)m.hidden=!USE_MOCK;
+ if(USE_MOCK){renderHead(MOCK_STATE);
+   toast('mock mode — the inline /state constant. Add ?mock=0 and serve it from SIW to go live.','warn');}
+ var b=$('#brandver');if(b&&!USE_MOCK)b.textContent='v…';
+ setHH();window.addEventListener('resize',setHH);
+ if(window.ResizeObserver){try{new ResizeObserver(setHH).observe(document.querySelector('header.top'));}catch(e){}}
+ poll();
+ setInterval(ticker,1000);ticker();
+}
+boot();
+</script>
+</body>
+</html>

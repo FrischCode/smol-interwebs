@@ -1,0 +1,410 @@
+{
+ "ok": true,
+ "product": "siw",
+ "name": "Smol InterWebs",
+ "version": "0.1.0",
+ "generated_at": "2026-11-24T19:41:07Z",
+ "poll_after_ms": 2000,
+ "server": {
+  "bind": "127.0.0.1",
+  "port": 7662,
+  "url": "http://127.0.0.1:7662",
+  "loopback": true,
+  "bound_on": [
+   "127.0.0.1"
+  ],
+  "credentials": {
+   "mode": "none",
+   "configured": false,
+   "username": null
+  },
+  "warning": null,
+  "uptime_seconds": 252.4,
+  "config_path": "C:\\Users\\example\\AppData\\Local\\siw\\config.json",
+  "platform": "win32 (Windows)"
+ },
+ "engine": {
+  "state": "down",
+  "up": false,
+  "host": "127.0.0.1",
+  "port": 8080,
+  "url": "http://localhost:8080",
+  "exe": "C:\\Users\\example\\AppData\\Local\\siw\\tools\\kiwix-tools\\kiwix-serve.exe",
+  "version": "kiwix-serve 3.7.0-1",
+  "form": "paths",
+  "bound_on": [],
+  "pid": null,
+  "started": "2026-11-24T19:30:12Z",
+  "started_by_siw": true,
+  "served_books": null,
+  "configured_books": 3,
+  "drift": null,
+  "problem": "nothing listening on 127.0.0.1:8080 (last SIW pid 18204 is gone)",
+  "bin": {
+   "state": "configured",
+   "version": "kiwix-serve 3.7.0-1",
+   "path": "C:\\Users\\example\\AppData\\Local\\siw\\tools\\kiwix-tools\\kiwix-serve.exe",
+   "exists": true,
+   "progress": null,
+   "error": null
+  },
+  "log_path": "C:\\Users\\example\\AppData\\Local\\siw\\engine-8080.log",
+  "uptime_seconds": null,
+  "last_checked": "2026-11-24T19:41:07Z"
+ },
+ "pending_apply": [
+  {
+   "field": "launch",
+   "label": "Engine launch form",
+   "from": "paths",
+   "to": "library",
+   "requires": "engine_restart"
+  }
+ ],
+ "corpus": {
+  "directory": "C:\\kiwix\\zims",
+  "exists": true,
+  "bytes_free": 103079215104,
+  "bytes_total": 549755813888,
+  "books": 3,
+  "bytes": 4514958541,
+  "parts": [
+   {
+    "name": "superuser.com_en_all_2026-07.zim.part",
+    "bytes": 1708323242
+   }
+  ],
+  "scanned_at": "2026-11-24T19:41:02Z",
+  "scan_errors": []
+ },
+ "catalog_link": "https://browse.library.kiwix.org",
+ "rows": [
+  {
+   "id": "wikipedia/mini",
+   "book": "wikipedia",
+   "title": "Wikipedia",
+   "build": "mini",
+   "builds": null,
+   "media": "text",
+   "size_bytes": 14388140442,
+   "state": "absent",
+   "note": "light text build \u00e2\u20ac\u201d the wiki default",
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": null,
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_en_mini_2026-08.zim",
+   "actions": [
+    "download"
+   ]
+  },
+  {
+   "id": "devdocs c",
+   "book": "devdocs c",
+   "title": "devdocs \u00e2\u20ac\u201d C",
+   "build": null,
+   "builds": null,
+   "media": "text",
+   "size_bytes": 1048576,
+   "state": "absent",
+   "note": null,
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": null,
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/devdocs/devdocs_en_c_2026-04.zim",
+   "actions": [
+    "download"
+   ]
+  },
+  {
+   "id": "devdocs cpp",
+   "book": "devdocs cpp",
+   "title": "devdocs \u00e2\u20ac\u201d C++",
+   "build": null,
+   "builds": null,
+   "media": "text",
+   "size_bytes": 8388608,
+   "state": "absent",
+   "note": null,
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": null,
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/devdocs/devdocs_en_cpp_2026-04.zim",
+   "actions": [
+    "download"
+   ]
+  },
+  {
+   "id": "devdocs javascript",
+   "book": "devdocs javascript",
+   "title": "devdocs \u00e2\u20ac\u201d JavaScript",
+   "build": null,
+   "builds": null,
+   "media": "text",
+   "size_bytes": 3145728,
+   "state": "absent",
+   "note": null,
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": null,
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/devdocs/devdocs_en_javascript_2026-04.zim",
+   "actions": [
+    "download"
+   ]
+  },
+  {
+   "id": "devdocs python",
+   "book": "devdocs python",
+   "title": "devdocs \u00e2\u20ac\u201d Python",
+   "build": null,
+   "builds": null,
+   "media": "text",
+   "size_bytes": 5242880,
+   "state": "served",
+   "note": null,
+   "defaulted": true,
+   "ident": {
+    "rung": "filename",
+    "name": "devdocs_en_python_2026-04",
+    "title": "devdocs Python",
+    "date": "2026-04",
+    "confidence": "high"
+   },
+   "file": {
+    "name": "devdocs_en_python_2026-04.zim",
+    "path": "C:\\kiwix\\zims\\devdocs_en_python_2026-04.zim",
+    "bytes": 5242880,
+    "mtime": "2026-05-02T11:07:33Z",
+    "sha256": "2e9c73b50a4d8f16c5b27e908d3f6a411f0c5e78a96d2b347c8e40f50b1a9d62",
+    "verified": true
+   },
+   "served": {
+    "configured": true,
+    "confirmed": false,
+    "seen_at": "2026-11-24T19:31:05Z",
+    "url": "http://localhost:8080/content/devdocs_en_python_2026-04/",
+    "page_url": "http://localhost:8080/content/devdocs_en_python_2026-04/python/3.12/"
+   },
+   "progress": null,
+   "error": null,
+   "source_url": null,
+   "actions": [
+    "remove",
+    "scan"
+   ]
+  },
+  {
+   "id": "devdocs rust",
+   "book": "devdocs rust",
+   "title": "devdocs \u00e2\u20ac\u201d Rust",
+   "build": null,
+   "builds": null,
+   "media": "text",
+   "size_bytes": 6291456,
+   "state": "queued",
+   "note": "one transfer at a time \u00e2\u20ac\u201d waiting for superuser",
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": {
+    "bytes": 0,
+    "total_bytes": 6291456,
+    "percent": 0,
+    "rate_bytes_s": null,
+    "eta_seconds": null,
+    "queue_position": 1,
+    "url": "https://lb.download.kiwix.org/zim/devdocs/devdocs_en_rust_2026-04.zim"
+   },
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/devdocs/devdocs_en_rust_2026-04.zim",
+   "actions": [
+    "cancel"
+   ]
+  },
+  {
+   "id": "devdocs typescript",
+   "book": "devdocs typescript",
+   "title": "devdocs \u00e2\u20ac\u201d TypeScript",
+   "build": null,
+   "builds": null,
+   "media": "text",
+   "size_bytes": 1048576,
+   "state": "absent",
+   "note": null,
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": null,
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/devdocs/devdocs_en_typescript_2026-04.zim",
+   "actions": [
+    "download"
+   ]
+  },
+  {
+   "id": "superuser",
+   "book": "superuser",
+   "title": "Super User",
+   "build": null,
+   "builds": null,
+   "media": "text+images",
+   "size_bytes": 3972844749,
+   "state": "downloading",
+   "note": "writing superuser.com_en_all_2026-07.zim.part",
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": {
+    "bytes": 1708323242,
+    "total_bytes": 3972844749,
+    "percent": 43,
+    "rate_bytes_s": 50331648,
+    "eta_seconds": 45,
+    "queue_position": 0,
+    "url": "https://lb.download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-07.zim"
+   },
+   "error": null,
+   "source_url": "https://lb.download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-07.zim",
+   "actions": [
+    "cancel"
+   ]
+  },
+  {
+   "id": "ifixit",
+   "book": "ifixit",
+   "title": "iFixit",
+   "build": null,
+   "builds": null,
+   "media": "text+images",
+   "size_bytes": 3543348019,
+   "state": "failed",
+   "note": null,
+   "defaulted": true,
+   "ident": null,
+   "file": null,
+   "served": null,
+   "progress": null,
+   "error": {
+    "code": "checksum_mismatch",
+    "message": "checksum mismatch \u00e2\u20ac\u201d the file hashes to 11c4a0e97d3f\u00e2\u20ac\u00a6, the catalog expects 7d90c3b2a5e1\u00e2\u20ac\u00a6",
+    "retryable": true,
+    "attempts": 2,
+    "failed_at": "2026-11-24T19:29:41Z",
+    "partial_removed": true
+   },
+   "source_url": "https://lb.download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim",
+   "actions": [
+    "remove"
+   ]
+  },
+  {
+   "id": "electronics_en_all_2026-01",
+   "book": "electronics",
+   "title": "Electrical Engineering Stack Exchange",
+   "build": null,
+   "builds": null,
+   "media": "text+images",
+   "size_bytes": 4294967296,
+   "state": "downloaded",
+   "note": "on disk \u00e2\u20ac\u201d confirmed when the engine starts",
+   "defaulted": true,
+   "ident": {
+    "rung": "filename",
+    "name": "electronics_en_all_2026-01",
+    "title": "Electrical Engineering Q&A",
+    "date": "2026-01",
+    "confidence": "high"
+   },
+   "file": {
+    "name": "electronics_en_all_2026-01.zim",
+    "path": "C:\\kiwix\\zims\\electronics_en_all_2026-01.zim",
+    "bytes": 4294967296,
+    "mtime": "2026-01-08T14:22:37Z",
+    "sha256": "7f3c8e19d2a45b6c8e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e",
+    "verified": true
+   },
+   "served": {
+    "configured": true,
+    "confirmed": false,
+    "seen_at": null,
+    "url": null,
+    "page_url": null
+   },
+   "progress": null,
+   "error": null,
+   "source_url": null,
+   "actions": [
+    "remove",
+    "scan"
+   ]
+  },
+  {
+   "id": "cooking.stackexchange.com_en_all_2026-06",
+   "book": "cooking.stackexchange.com",
+   "title": "Cooking Stack Exchange",
+   "build": null,
+   "builds": null,
+   "media": "text+images",
+   "size_bytes": 214748365,
+   "state": "downloaded",
+   "note": "in the folder since 19:38 \u00e2\u20ac\u201d identified on scan",
+   "defaulted": true,
+   "ident": {
+    "rung": "filename",
+    "name": "cooking.stackexchange.com_en_all_2026-06",
+    "title": "Cooking Stack Exchange",
+    "date": "2026-06",
+    "confidence": "high"
+   },
+   "file": {
+    "name": "cooking.stackexchange.com_en_all_2026-06.zim",
+    "path": "C:\\kiwix\\zims\\cooking.stackexchange.com_en_all_2026-06.zim",
+    "bytes": 214748365,
+    "mtime": "2026-11-24T19:38:12Z",
+    "sha256": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a",
+    "verified": true
+   },
+   "served": {
+    "configured": true,
+    "confirmed": false,
+    "seen_at": null,
+    "url": null,
+    "page_url": null
+   },
+   "progress": null,
+   "error": null,
+   "source_url": null,
+   "actions": [
+    "remove",
+    "scan"
+   ]
+  }
+ ],
+ "tasks": [],
+ "notices": [
+  {
+   "id": "engine-down",
+   "level": "warn",
+   "text": "Engine is down \u2014 3 books on disk, none served. Search and page links are dead until it is started.",
+   "since": "2026-11-24T19:41:02Z",
+   "action": {
+    "verb": "engine_start",
+    "label": "Start engine"
+   }
+  }
+ ]
+}

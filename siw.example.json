@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "corpus": "C:\\kiwix\\zims",
+  "selected": null,
+  "port": 18099,
+  "api_port": 7662,
+  "host": "127.0.0.1",
+  "bind": "127.0.0.1",
+  "exe": null,
+  "launch": "auto",
+  "open_browser": true,
+  "username": "",
+  "password": ""
+}

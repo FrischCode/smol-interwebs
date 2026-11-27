@@ -1,0 +1,234 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SIW -- Smol InterWebs",
+    "version": "0.1.0",
+    "description": "Offline fulltext search over the ZIM corpus this machine configured, served as JSON. One port answers the kernel routes (this document) and the console routes (`/state`, `/action`, `/mcp`, and the page itself). The engine's address is never a request parameter: the corpus, the port, the bind and the binary are the operator's act at the config. A request never names a host, a port, a directory or a binary. Responses are one JSON object always; failures carry `{\"error\": {\"code\", \"message\"}}` with the status that names the kind of failure. Credentials: loopback answers without any; a bind beyond loopback mandates a password, enforced at boot, and every route on the port then answers `401` until `Authorization: Basic` is right."
+  },
+  "servers": [
+    { "url": "http://127.0.0.1:7662", "description": "the default loopback console+API port" }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "The card a curious client reads first",
+        "description": "What this is, and every route this server answers.",
+        "responses": {
+          "200": {
+            "description": "The service card.",
+            "content": { "application/json": { "schema": {
+              "type": "object",
+              "properties": {
+                "service": { "type": "string", "example": "siw" },
+                "name": { "type": "string" },
+                "version": { "type": "string" },
+                "purpose": { "type": "string" },
+                "routes": { "type": "object", "additionalProperties": { "type": "string" } },
+                "config": { "type": "string", "nullable": true },
+                "errors": { "type": "object", "additionalProperties": { "type": "string" } }
+              } } } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "The deployment's vital signs, read live",
+        "description": "Is the engine answering, on what address is it actually bound, is that loopback-only, and how many books does it serve against how many the config picked. Never touches the internet.",
+        "responses": {
+          "200": {
+            "description": "Always 200 -- a down engine is `ok: false` with the facts, not an error status.",
+            "content": { "application/json": { "schema": {
+              "type": "object",
+              "properties": {
+                "ok": { "type": "boolean", "description": "true when the engine answered the probe" },
+                "service": { "type": "string" },
+                "version": { "type": "string" },
+                "engine": { "type": "object", "description": "host, port, up, bound_on, loopback_only, form, started_by_siw, catalog_problem" },
+                "corpus": { "type": "object", "description": "directory, books, picked, parts, bytes" },
+                "served": { "type": "integer", "nullable": true, "description": "the engine's own catalog count; null when down or unreadable (never 0 for 'nobody looked')" },
+                "drift": { "nullable": true, "description": "served vs configured set difference; null when down" },
+                "api": { "type": "object" },
+                "config_path": { "type": "string", "nullable": true },
+                "platform": { "type": "string" },
+                "spawn_proven": { "type": "boolean" }
+              } } } }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "The answer record",
+        "description": "`q` is required. `mode=global` (default) is the engine's merged ranking over everything served; `mode=grouped` asks each book its own question and answers with each book's best hit plus its hit count. `heal=0` refuses to start an engine as a side effect of a query. A zero-hit answer carries a `zero_hit` sentence that says what the zero does not mean.",
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "schema": { "type": "string" },
+            "description": "The words to search for (AND across all terms). `query=` is accepted as a spelling of the same thing. Missing or blank is a 400." },
+          { "name": "query", "in": "query", "schema": { "type": "string" }, "deprecated": true },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 25 },
+            "description": "Max results. Default 5 (global) / 10 (grouped)." },
+          { "name": "sources", "in": "query", "schema": { "type": "string" },
+            "description": "Global route only: comma/space-separated book-name substrings narrowing the selection. Refused with mode=grouped." },
+          { "name": "corpus", "in": "query", "schema": { "type": "string" },
+            "description": "Global route only: family substring filter (e.g. 'wikipedia'). Refused with mode=grouped." },
+          { "name": "heal", "in": "query", "schema": { "type": "string", "default": "1" },
+            "description": "0/false/no refuses to start a down engine; the query then answers 503." },
+          { "name": "mode", "in": "query", "schema": { "type": "string", "enum": ["global", "grouped"] } },
+          { "name": "books", "in": "query", "schema": { "type": "string" },
+            "description": "Grouped route only: comma/space-separated book names (file stems) -- the universe every named book answers out of. Unknown names are a 400." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The answer record.",
+            "content": { "application/json": { "schema": {
+              "type": "object",
+              "properties": {
+                "query": { "type": "string" },
+                "route": { "type": "string", "description": "selection-less | books.name | books.name (fallback) | grouped (per-book)" },
+                "scope": { "type": "object", "description": "corpus, configured, selected, served" },
+                "total": { "type": "integer" },
+                "count": { "type": "integer" },
+                "results": { "type": "array", "items": { "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "book": { "type": "string" },
+                    "url": { "type": "string" },
+                    "snippet": { "type": "string" },
+                    "hits_in_book": { "type": "integer", "description": "grouped route only" }
+                  } } },
+                "asked": { "type": "integer" },
+                "healed_in_seconds": { "type": "number", "nullable": true },
+                "heal_note": { "type": "string" },
+                "seconds": { "type": "number" },
+                "zero_hit": { "type": "string", "description": "empty when there were results; else the contract sentence for the kind of zero" },
+                "endpoint": { "type": "string" },
+                "books_asked": { "type": "integer", "description": "grouped route only" },
+                "books_zero": { "type": "integer", "description": "grouped route only" },
+                "book_errors": { "type": "array", "items": { "type": "string" }, "description": "grouped route only: books whose own request failed" }
+              } } } }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "409": { "$ref": "#/components/responses/Error" },
+          "502": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/catalog": {
+      "get": {
+        "summary": "The books this machine has",
+        "description": "The directory listing with sizes, the pick, and (with `served=1`) what the running engine says it serves. The names printed here are the ones `books=` and `sources=` speak.",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "substring filter over the listing" },
+          { "name": "picked", "in": "query", "schema": { "type": "string" }, "description": "1/true/yes shows only the picked set" },
+          { "name": "served", "in": "query", "schema": { "type": "string" }, "description": "1/true/yes adds the engine's own served names" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The listing.",
+            "content": { "application/json": { "schema": {
+              "type": "object",
+              "properties": {
+                "corpus": { "type": "string", "nullable": true },
+                "count": { "type": "integer" },
+                "picked": { "type": "integer" },
+                "whole_corpus": { "type": "boolean", "description": "true when selected is null (nothing was narrowed)" },
+                "filter": { "type": "string", "nullable": true },
+                "shown": { "type": "integer" },
+                "cost": { "type": "object" },
+                "unknown_picks": { "type": "array", "items": { "type": "string" } },
+                "books": { "type": "array", "items": { "type": "object",
+                  "properties": {
+                    "name": { "type": "string" }, "short_name": { "type": "string" },
+                    "size_bytes": { "type": "integer" }, "picked": { "type": "boolean" } } } },
+                "served": { "type": "array", "nullable": true, "items": { "type": "string" } }
+              } } } }
+          }
+        }
+      }
+    },
+    "/spec": {
+      "get": {
+        "summary": "This server's OpenAPI document, as JSON",
+        "description": "The document you are reading, answered by the server it describes. The file behind it is this repo's `docs/api.json` (overridable with `SIW_SPEC`).",
+        "responses": {
+          "200": { "description": "This document." },
+          "500": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/state": {
+      "get": {
+        "summary": "The console snapshot (the page's only read)",
+        "description": "One JSON object with the whole truth the console page renders: server, engine, pending_apply, corpus, rows, tasks, notices. Answers fully with the engine down and never touches the internet. The field tables are `web/CONTRACT.md` section 1.",
+        "responses": {
+          "200": { "description": "The snapshot." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/action": {
+      "post": {
+        "summary": "One console verb and its args",
+        "description": "`{\"verb\": str, \"args\": object}` in, one JSON object out: `{\"ok\": true, \"result\": {...}}` or `{\"ok\": false, \"error\": {\"code\", \"message\"}}`. The verb table is `web/CONTRACT.md` section 2. A same-origin check guards the POST: a body carrying a cross-origin `Origin` or `Sec-Fetch-Site: cross-site` is refused without being run.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object",
+            "properties": {
+              "verb": { "type": "string" },
+              "args": { "type": "object" }
+            },
+            "required": ["verb"] } } }
+        },
+        "responses": {
+          "200": { "description": "The verb's result." },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/Error" },
+          "409": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "summary": "The Model Context Protocol route (JSON-RPC 2.0)",
+        "description": "Three tools over the same service as everything else: `search`, `list_books`, `add_book`. A single JSON-RPC message in, one object out; a batch array in, an array out; a notification gets 202 with no body. Same-origin checks and credentials apply as on `/action`.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object",
+            "properties": {
+              "jsonrpc": { "type": "string", "enum": ["2.0"] },
+              "id": {},
+              "method": { "type": "string", "description": "initialize | ping | tools/list | tools/call" },
+              "params": { "type": "object" }
+            } } } }
+        },
+        "responses": {
+          "200": { "description": "The JSON-RPC response object." },
+          "202": { "description": "A notification was accepted; nothing to answer." },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Error": {
+        "description": "One error shape everywhere: a code a machine can branch on, a sentence a person can act on.",
+        "content": { "application/json": { "schema": {
+          "type": "object",
+          "properties": { "error": { "type": "object",
+            "properties": { "code": { "type": "string" }, "message": { "type": "string" } } },
+            "required": ["error"] } } } }
+      },
+      "Unauthorized": {
+        "description": "Credentials are configured and this request did not carry the right ones.",
+        "headers": { "WWW-Authenticate": { "description": "Basic realm=\"siw\"" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# Text is LF everywhere; the Windows door is the one exception cmd will accept.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.sh text eol=lf
+*.png binary
+*.zim binary

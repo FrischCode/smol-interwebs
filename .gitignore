@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.ruff_cache/
+# The machine's own state, written beside the tree when `./siw.json` is the config:
+# the config (holds the credential pair in plaintext) and the engine's per-port records.
+siw.json
+siw-engine-*.pid
+siw-api-*.pid
+kiwix-serve-*.log
+
+# interpreter envs built by the front doors (siw-test.sh builds a .venv when pytest is missing)
+.venv/

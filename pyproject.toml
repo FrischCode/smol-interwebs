@@ -1,0 +1,51 @@
+[project]
+name = "siw"
+# `uv pip install -e .` needs it: PEP 621 requires `name` and `version`, and a fresh machine's
+# documented bootstrap dies on the missing one.
+version = "0.2.0"
+description = "SIW -- Smol InterWebs: an offline ZIM corpus, served as a documented API"
+requires-python = ">=3.11"
+# Permissive on purpose, the reason written where the packaging reads it: the tree's claim is that its
+# owner can read all of it and change it without permission, and a copyleft would force that owner to
+# re-license their own modifications. `LICENSE` carries the text.
+license = "MIT"
+
+# Core is stdlib-only. No runtime dependency may be added to this list without the decision and its
+# reason written here first — the reason must travel with the source that would come to depend on it.
+# The claim is what makes the tool deployable: a machine with a corpus and a Python needs nothing else,
+# and a search tool that reaches for a package index is a search tool that needs the internet.
+dependencies = []
+
+# Package discovery is pinned, because auto-discovery refuses a working tree: the folders that
+# accumulate at the root beside `siw` as the tree is used — the docs, the examples, the tests, a
+# corpus folder someone drops in to try it — read as candidate packages, and a fresh
+# `uv pip install -e .` on a copy of a working tree dies on them. Only `siw` is the package.
+[tool.setuptools]
+packages = ["siw"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers -p no:cacheprovider"
+
+# Lint and format are a dev concern, not a shipping one: the core is stdlib-only (the `dependencies`
+# above) and runs on any interpreter, while ruff lives in the venv. It exists so the code keeps the
+# promise its consistency already makes. `ruff check` is the gate, and it carries the line ceiling
+# (E501 at the 110 below): a ceiling the house declares is a ceiling the machine enforces.
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+# Scratch and the venv are not package code, and the operator's root launchers are excluded by
+# name — not by folder — so a new file at the root is linted by default.
+extend-exclude = ["scratch", ".venv", "siw-advisor.py", "siw-impl.py"]
+
+[tool.ruff.lint]
+# The E rules except indentation and whitespace (E1, E2), pyflakes (F), warnings (W), and import order
+# (I): E4 imports, E501 the line ceiling, E7 statements, E9 runtime. E501 is the one layout fact the
+# machine polices — the ceiling the house declares, enforced at the 110 above. E1/E2 stay out because the layout here is the house's deliberate style.
+select = ["E4", "E501", "E7", "E9", "F", "W", "I"]
+# Deliberate house patterns, not defects, ignored one rule at a time so the exclusion stays narrow and
+# cannot conceal unrelated findings: E741 the terse `l` loop/exception var, E731 the named lambda
+# assignment. I001 (import order) is ignored too — the imports here are pure (no import side effects),
+# so order has no functional effect, and its auto-fix rewraps long import lists, a layout change kept
+# out. `I` stays selected so any other isort finding is still reported.
+ignore = ["E741", "E731", "I001"]
